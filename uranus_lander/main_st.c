@@ -26,7 +26,7 @@
 #include "input.h"
 #include "sound.h"
 #include "st_sound.h"
-#include "natfeats.h"
+#include "natfeats.h"   /* ../st_port */
 
 #define FRCLOCK (*(volatile long *)0x466)	/* VBL counter */
 

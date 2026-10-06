@@ -7,7 +7,7 @@ SRCS = main_falcon.cpp terrain.cpp render.cpp game.cpp pilots.cpp combat.cpp sfx
 include ../falcon_port/falcon.mk
 
 # The original modplay.c, unchanged: built as C++ so custom.dmacon writes
-# go through the Paula emulation (fpaula.h), entry points renamed so
+# go through the Paula emulation (../st_port/paula.h), entry points renamed so
 # audio_falcon.cpp can wrap them.
 MP_RENAME = -Dmodplay_init=mp_init_raw -Dmodplay_start=mp_start_raw \
             -Dmodplay_start_song=mp_start_song_raw -Dmodplay_stop=mp_stop_raw \

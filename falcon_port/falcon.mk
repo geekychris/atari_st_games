@@ -2,7 +2,7 @@
 # A port's Makefile sets NAME, SRCS (C and C++), optional EXTRA_CFLAGS,
 # then includes this file.  Reuses the ST port's IKBD input, NatFeats
 # and amiga_types.h (../st_port); falcon_port/ has the 16 bit true colour
-# graphics layer (fgfx), Paula emulation on DMA sound (fpaula) and its
+# graphics layer (fgfx), Paula emulation on DMA sound (../st_port/paula) and its
 # own Amiga header shims in compat/.
 #
 #   make CROSS=~/computers/atari-cc/opt/cross-mint/bin/m68k-atari-mintelf-
@@ -25,7 +25,7 @@ CXXFLAGS = $(COMMON) -fno-exceptions -fno-rtti
 STRIP   ?=
 OUT      = build
 PRG      = $(OUT)/$(NAME).PRG
-F_SRCS   = $(FPORT)fgfx.c $(FPORT)fpaula.cpp $(FPORT)abstub.c $(STPORT)st_ikbd.c $(STPORT)natfeats.c
+F_SRCS   = $(FPORT)fgfx.c $(STPORT)paula.c $(FPORT)abstub.c $(STPORT)st_ikbd.c $(STPORT)natfeats.c
 ALL_SRCS = $(SRCS) $(F_SRCS)
 OBJS     = $(patsubst %,$(OUT)/obj/%.o,$(notdir $(basename $(ALL_SRCS))))
 HDRS     = $(wildcard *.h) $(wildcard $(FPORT)*.h) $(wildcard $(FPORT)compat/*.h) $(wildcard $(STPORT)*.h)

@@ -28,6 +28,7 @@ struct RastPort {
 	UBYTE apen, bpen;
 	struct DirtyList *dirty;	/* NULL: don't record (background) */
 	UBYTE record;			/* HUD layer: record ops, see gfx_hud() */
+	UBYTE ormode;			/* lines OR their colour, see gfx_or_mode */
 };
 
 /* graphics.library subset (logical 320x256 coordinates) */
@@ -105,6 +106,9 @@ gfx_sprite *gfx_sprite_build(gfx_draw_fn fn, const void *ctx, WORD arg, WORD y, 
  * appear on that colour and don't overlap (logs on water...). */
 gfx_sprite *gfx_sprite_build_on(gfx_draw_fn fn, const void *ctx, WORD arg, WORD y, WORD w, WORD h, int bg);
 void gfx_sprite_draw(struct RastPort *rp, const gfx_sprite *spr, WORD x);
+/* at logical x, y (top left of the build area) for objects that also
+ * move vertically; clipped; ORs into colour 0 areas in OR mode */
+void gfx_sprite_draw_xy(struct RastPort *rp, const gfx_sprite *spr, WORD x, WORD y);
 
 /* clear a RastPort's whole buffer to colour 0 (scenery layer use) */
 void gfx_clear(struct RastPort *rp);
@@ -135,6 +139,12 @@ void gfx_restore_back(void);		/* undo last sprites in back buffer */
 struct RastPort *gfx_back(void);	/* sprite layer: back buffer */
 void gfx_swap(void);			/* show back buffer from next VBL */
 void gfx_set_frame_vbls(int n);		/* frame pacing: VBLs per frame */
+
+/* Sprite layer lines in OR mode: Draw() only sets the planes where the
+ * pen has 1 bits instead of rewriting all four.  Correct over colour 0
+ * (vector graphics on a black background); where lines cross, colours
+ * mix.  Halves the cost of line-heavy frames. */
+void gfx_or_mode(int on);
 
 /* Small sprintf for the HUD (%s, %c, %ld/%d with optional zero padded
  * width): mintlib's stdio sprintf costs ~10000 cycles per call on a

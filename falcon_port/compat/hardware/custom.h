@@ -1,3 +1,3 @@
-/* Amiga header shim (Falcon ports): Paula registers, see fpaula.h */
+/* Amiga header shim (Falcon ports): Paula registers, see st_port/paula.h */
 #include "amiga_compat.h"
-#include "fpaula.h"
+#include "paula.h"

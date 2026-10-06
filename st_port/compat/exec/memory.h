@@ -1,2 +1,2 @@
-/* Amiga header shim for the ST ports: nothing needed */
-#include "amiga_types.h"
+/* Amiga header shim for the ST ports: memory, see amiga_compat.h */
+#include "amiga_compat.h"

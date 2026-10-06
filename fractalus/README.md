@@ -7,6 +7,19 @@ colours, 68020), so this port targets the **Falcon030**: 16 MHz 68030,
 320x240 in 16-bit true colour. It uses the shared Falcon layer in
 `../falcon_port`.
 
+## Screenshots
+
+<table><tr>
+<td align="center"><img src="docs/title.png" width="320" alt="Title and briefing"><br>Title and briefing</td>
+<td align="center"><img src="docs/flight.png" width="320" alt="Flying over the fractal terrain"><br>Flying over the fractal terrain</td>
+<td align="center"><img src="docs/pilots.png" width="320" alt="Downed pilots in view"><br>Downed pilots in view</td>
+</tr><tr>
+<td align="center"><img src="docs/rescue.png" width="320" alt="Pilot aboard"><br>Pilot aboard</td>
+<td align="center"><img src="docs/jaggi.png" width="320" alt="A Jaggi in disguise"><br>A Jaggi in disguise</td>
+</tr></table>
+
+Captured through the agent API (`/screen`, 2x). The rescue and Jaggi shots come from `rescue_test.py`.
+
 ```sh
 make CROSS=~/computers/atari-cc/opt/cross-mint/bin/m68k-atari-mintelf-
 make run CROSS=...      # Falcon, 14 MB, VGA, EmuTOS 1024k, autostart

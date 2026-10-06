@@ -4,6 +4,15 @@ Port of Frank the Frog from
 [geekychris/amiga_games](https://github.com/geekychris/amiga_games) (`frank_the_frog/`,
 commit in `.upstream-commit`), built on the shared ST layer in `../st_port`.
 
+## Screenshots
+
+<table><tr>
+<td align="center"><img src="docs/title.png" width="320" alt="Title"><br>Title</td>
+<td align="center"><img src="docs/playfield.png" width="320" alt="Road, river and homes"><br>Road, river and homes</td>
+</tr></table>
+
+Captured through the agent API (`/screen`, 2x).
+
 ```sh
 make CROSS=~/computers/atari-cc/opt/cross-mint/bin/m68k-atari-mintelf-
 make run CROSS=...

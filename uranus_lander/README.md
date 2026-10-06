@@ -5,7 +5,15 @@ A port of Uranus Lander from the Amiga
 commit in `.upstream-commit`) to the Atari ST. It was built, run, profiled
 and tested entirely through the Hatari agent API.
 
-![title](planet_preview.png)
+## Screenshots
+
+<table><tr>
+<td align="center"><img src="docs/title.png" width="320" alt="Title and high scores"><br>Title and high scores</td>
+<td align="center"><img src="docs/flight.png" width="320" alt="Descent"><br>Descent</td>
+<td align="center"><img src="docs/landed.png" width="320" alt="Landed on a x2 pad (autopilot)"><br>Landed on a x2 pad (autopilot)</td>
+</tr></table>
+
+Captured through the agent API (`/screen`, 2x) while `autopilot.py` played.
 
 ## Build and run
 

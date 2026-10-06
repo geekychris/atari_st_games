@@ -154,6 +154,12 @@ void gfx_exit(void);
 struct RastPort *gfx_bg(void);		/* scenery layer */
 void gfx_bg_clear(void);
 void gfx_bg_to_screens(void);		/* after scenery changes */
+/* scenery rows y0..y1 (logical) into the background only, for ports
+ * that copy those rows into the back buffer every frame (gfx_copy_band) */
+void gfx_bg_commit_rows(WORD y0, WORD y1);
+/* after gfx_bg_commit_rows: have gfx_restore_back() copy those rows into
+ * each screen (instead of copying them every frame) */
+void gfx_bg_dirty_rows(WORD y0, WORD y1);
 struct RastPort *gfx_hud(void);		/* HUD layer (records operations) */
 void gfx_hud_commit(void);		/* render HUD changes of this frame */
 void gfx_hud_keep(void);		/* instead of drawing + commit: HUD unchanged */

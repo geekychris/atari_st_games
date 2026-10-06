@@ -4,6 +4,16 @@ Port of Nova Defense, the invaders game in
 [geekychris/amiga_games](https://github.com/geekychris/amiga_games) (`nova_defense/`,
 commit in `.upstream-commit`), built on the shared ST layer in `../st_port`.
 
+## Screenshots
+
+<table><tr>
+<td align="center"><img src="docs/title.png" width="320" alt="Title"><br>Title</td>
+<td align="center"><img src="docs/battle.png" width="320" alt="Wave 1, shields eroding"><br>Wave 1, shields eroding</td>
+<td align="center"><img src="docs/mystery.png" width="320" alt="Mystery ship"><br>Mystery ship</td>
+</tr></table>
+
+Captured through the agent API (`/screen`, 2x) while `bot.py` played.
+
 ```sh
 make CROSS=~/computers/atari-cc/opt/cross-mint/bin/m68k-atari-mintelf-
 make run CROSS=...           # ST, PAL EmuTOS, autostart

@@ -139,6 +139,126 @@ void RectFill(struct RastPort *rp, LONG x0, LONG y0, LONG x1, LONG y1)
 	fgfx_fill(rp, x0, y0, x1, y1, rp->apen);
 }
 
+/*
+ * AreaMove / AreaDraw / AreaEnd: the polygon is filled when it is
+ * closed, as graphics.library does, but without TmpRas / AreaInfo (the
+ * caller's setup is not needed).  Polygons are filled as convex: per
+ * physical row from the leftmost to the rightmost edge crossing, at the
+ * row centres; edges are stepped in 16.16 fixed point.  Vertex y is in
+ * the game's logical 256 line coordinates.
+ */
+#define AREA_MAX 32
+static WORD area_x[AREA_MAX], area_y[AREA_MAX];
+static int area_n;
+
+static WORD clamp_coord(LONG v)
+{
+	return v < -8192 ? -8192 : v > 8192 ? 8192 : (WORD)v;
+}
+
+LONG AreaMove(struct RastPort *rp, LONG x, LONG y)
+{
+	if (area_n >= 3)
+		AreaEnd(rp);		/* an open polygon is closed first */
+	area_n = 0;
+	return AreaDraw(rp, x, y);
+}
+
+LONG AreaDraw(struct RastPort *rp, LONG x, LONG y)
+{
+	(void)rp;
+	if (area_n >= AREA_MAX)
+		return -1;
+	area_x[area_n] = clamp_coord(x);
+	area_y[area_n] = clamp_coord(y);
+	area_n++;
+	return 0;
+}
+
+static LONG span_l[MAX_H], span_r[MAX_H];
+static int span_min, span_max;
+
+/* rows r0..r1 join the polygon's row range (new rows start empty) */
+static void span_rows(int r0, int r1)
+{
+	if (span_max < span_min)
+	{
+		span_min = r0;
+		span_max = r0 - 1;
+	}
+	for (int q = r0; q < span_min; q++)
+	{
+		span_l[q] = 0x7fffffff;
+		span_r[q] = -0x7fffffff;
+	}
+	for (int q = span_max + 1; q <= r1; q++)
+	{
+		span_l[q] = 0x7fffffff;
+		span_r[q] = -0x7fffffff;
+	}
+	if (r0 < span_min) span_min = r0;
+	if (r1 > span_max) span_max = r1;
+}
+
+static void span_x(int r, LONG x)
+{
+	if (x < span_l[r]) span_l[r] = x;
+	if (x > span_r[r]) span_r[r] = x;
+}
+
+LONG AreaEnd(struct RastPort *rp)
+{
+	int n = area_n;
+	area_n = 0;
+	if (n < 2)
+		return 0;
+	span_min = 0;
+	span_max = -1;
+	for (int i = 0; i < n; i++)
+	{
+		int j = i + 1 < n ? i + 1 : 0;
+		/* physical y in 8.8: y * height / 256 lines */
+		LONG ya = (LONG)area_y[i] * height, yb = (LONG)area_y[j] * height;
+		LONG xa = area_x[i], xb = area_x[j];
+		if (ya > yb)
+		{
+			LONG t = ya; ya = yb; yb = t;
+			t = xa; xa = xb; xb = t;
+		}
+		/* rows whose centre (r * 256 + 128) is in [ya, yb] */
+		int r0 = (int)((ya - 128 + 255) >> 8), r1 = (int)((yb - 128) >> 8);
+		if (r0 < 0) r0 = 0;
+		if (r1 >= height) r1 = height - 1;
+		if (r0 > r1)
+			continue;
+		span_rows(r0, r1);
+		if (ya == yb)
+		{
+			/* horizontal edge on a row centre: both ends */
+			span_x(r0, xa << 16);
+			span_x(r0, xb << 16);
+			continue;
+		}
+		/* x at the first row centre; the slope only matters (and only
+		 * fits 32 bits) when the edge spans several rows, dy >= 256 */
+		LONG x = (xa << 16) + (LONG)((((long long)(xb - xa) << 16) *
+		                              ((((LONG)r0 << 8) + 128) - ya)) / (yb - ya));
+		LONG slope = r1 > r0 ? (LONG)(((long long)(xb - xa) << 24) / (yb - ya)) : 0;
+		for (int r = r0; r <= r1; r++, x += slope)
+			span_x(r, x);
+	}
+	UWORD c = lut[rp->apen];
+	for (int r = span_min; r <= span_max; r++)
+	{
+		LONG l = span_l[r] >> 16, h = span_r[r] >> 16;
+		if (l < 0) l = 0;
+		if (h >= SCR_W) h = SCR_W - 1;
+		if (l <= h)
+			hspan(rp->base + row_off[r], (int)l, (int)h, c);
+	}
+	return 0;
+}
+
 void SetRast(struct RastPort *rp, ULONG pen)
 {
 	fill_phys(rp->base, 0, 0, SCR_W - 1, height - 1, lut[pen & 255]);

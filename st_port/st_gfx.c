@@ -113,6 +113,7 @@ static void mouse_show(void)
 }
 
 static void add_dirty(struct DirtyList *d, int g0, int g1, int y0, int y1);
+static void copy_rect(UWORD *dst, const UWORD *src, int g0, int g1, int y0, int y1);
 
 static void mark(struct RastPort *rp, short x0, short y0, short x1, short y1)
 {
@@ -340,7 +341,41 @@ void Draw(struct RastPort *rp, WORD x, WORD y)
 	mark(rp, bx0, by0, bx1, by1);
 }
 
+static void __attribute__((noinline)) rectfill_general(struct RastPort *rp, WORD x0, WORD y0, WORD x1, WORD y1);
+
+/* Small rectangles inside one 16 pixel group (tiles, dots, particles)
+ * are the common case: handled here with few registers; everything else
+ * goes through the general code. */
 void RectFill(struct RastPort *rp, WORD x0, WORD y0, WORD x1, WORD y1)
+{
+	if (!rp->record && (x0 >> 4) == (x1 >> 4) && x0 >= 0 && x1 < SCR_W && x0 <= x1 &&
+	    y0 >= 0 && y1 <= YMAP_MAX && y0 <= y1)
+	{
+		short py0 = ymap[y0 - YMAP_MIN], py1 = ymap[y1 - YMAP_MIN];
+		if (py1 >= SCR_H) py1 = SCR_H - 1;
+		if (py0 > py1)
+			return;
+		UWORD m = (0xffff >> (x0 & 15)) & (0xffff << (15 - (x1 & 15))), k = ~m;
+		const UWORD *c = cmask[rp->apen];
+		UWORD c0 = c[0] & m, c1 = c[1] & m, c2 = c[2] & m, c3 = c[3] & m;
+		UWORD *q = rp->base + row_off[py0] + ((x0 >> 4) << 2);
+		short n = py1 - py0;
+		do
+		{
+			q[0] = (q[0] & k) | c0;
+			q[1] = (q[1] & k) | c1;
+			q[2] = (q[2] & k) | c2;
+			q[3] = (q[3] & k) | c3;
+			q += LINE_W;
+		} while (--n >= 0);
+		if (rp->dirty)
+			mark(rp, x0, py0, x1, py1);
+		return;
+	}
+	rectfill_general(rp, x0, y0, x1, y1);
+}
+
+static void rectfill_general(struct RastPort *rp, WORD x0, WORD y0, WORD x1, WORD y1)
 {
 	if (rp->record)
 	{
@@ -1003,6 +1038,20 @@ void gfx_bg_commit_rows(WORD y0, WORD y1)
 	if (py0 <= py1)
 		memcpy(bgscreen + row_off[py0], scenery + row_off[py0],
 		       (py1 - py0 + 1) * LINE_W * 2);
+}
+
+void gfx_bg_copy_rect(struct RastPort *rp, WORD x0, WORD y0, WORD x1, WORD y1)
+{
+	int py0 = map_y(y0), py1 = map_y(y1);
+	if (x0 < 0) x0 = 0;
+	if (x1 >= SCR_W) x1 = SCR_W - 1;
+	if (py0 < 0) py0 = 0;
+	if (py1 >= SCR_H) py1 = SCR_H - 1;
+	if (x0 > x1 || py0 > py1)
+		return;
+	copy_rect(rp->base, scenery, x0 >> 4, x1 >> 4, py0, py1);
+	if (rp->dirty)
+		mark(rp, x0, py0, x1, py1);
 }
 
 void gfx_bg_dirty_rows(WORD y0, WORD y1)

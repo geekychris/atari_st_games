@@ -27,7 +27,7 @@ static struct RastPort rp_screen[2], rp_scenery, rp_hud, rp_draw;
 
 /* HUD layer: operations recorded this frame vs. last frame */
 enum { OP_PIXEL, OP_LINE, OP_RECT, OP_TEXT, OP_CUSTOM };
-#define MAX_OPS  200
+#define MAX_OPS  400
 #define TEXT_MAX 40
 /* (OP_CUSTOM keys longer than TEXT_MAX are truncated) */
 struct Op {

@@ -112,20 +112,37 @@ static void mouse_show(void)
 	__asm__ volatile (".dc.w 0xa009" : : : "d0", "d1", "d2", "a0", "a1", "a2", "memory");
 }
 
-static void mark(struct RastPort *rp, int x0, int y0, int x1, int y1)
+static void mark(struct RastPort *rp, short x0, short y0, short x1, short y1)
 {
 	struct DirtyList *d = rp->dirty;
 	if (!d || d->full)
 		return;
+	short g0 = x0 >> 4, g1 = x1 >> 4;
 	if (d->n)
 	{
-		/* merge consecutive marks in the same columns */
-		int g0 = x0 >> 4, g1 = x1 >> 4;
-		if (d->r[d->n - 1].g0 == g0 && d->r[d->n - 1].g1 == g1 &&
-		    y0 <= d->r[d->n - 1].y1 + 1 && y1 >= d->r[d->n - 1].y0 - 1)
+		/* merge into the previous mark when they touch (consecutive
+		 * edges of a polygon, a sprite drawn in parts) or when the
+		 * union wastes little: one rectangle instead of many
+		 * overlapping ones to restore */
+		struct { WORD g0, g1, y0, y1; } *r = (void *)&d->r[d->n - 1];
+		short ug0 = g0 < r->g0 ? g0 : r->g0, ug1 = g1 > r->g1 ? g1 : r->g1;
+		short uy0 = y0 < r->y0 ? y0 : r->y0, uy1 = y1 > r->y1 ? y1 : r->y1;
+		int merge = g0 <= r->g1 + 1 && g1 >= r->g0 - 1 &&
+			    y0 <= r->y1 + 1 && y1 >= r->y0 - 1;
+		if (!merge)
 		{
-			if (y0 < d->r[d->n - 1].y0) d->r[d->n - 1].y0 = y0;
-			if (y1 > d->r[d->n - 1].y1) d->r[d->n - 1].y1 = y1;
+			/* 16 x 16 bit products: a 32 bit multiply is a library call */
+			long ua = (long)(short)(ug1 - ug0 + 1) * (short)(uy1 - uy0 + 1);
+			long sa = (long)(short)(g1 - g0 + 1) * (short)(y1 - y0 + 1) +
+				  (long)(short)(r->g1 - r->g0 + 1) * (short)(r->y1 - r->y0 + 1);
+			merge = ua * 2 <= sa * 3;
+		}
+		if (merge)
+		{
+			r->g0 = ug0;
+			r->g1 = ug1;
+			r->y0 = uy0;
+			r->y1 = uy1;
 			return;
 		}
 	}
@@ -134,8 +151,8 @@ static void mark(struct RastPort *rp, int x0, int y0, int x1, int y1)
 		d->full = 1;
 		return;
 	}
-	d->r[d->n].g0 = x0 >> 4;
-	d->r[d->n].g1 = x1 >> 4;
+	d->r[d->n].g0 = g0;
+	d->r[d->n].g1 = g1;
 	d->r[d->n].y0 = y0;
 	d->r[d->n].y1 = y1;
 	d->n++;
@@ -207,6 +224,60 @@ void Move(struct RastPort *rp, WORD x, WORD y)
 static void record(struct RastPort *rp, int type, int x0, int y0, int x1, int y1,
                    const char *text, int len);
 
+/*
+ * Bresenham line (physical coordinates).  The word pointer and bit mask
+ * step along with x/y instead of being recomputed per pixel, and the
+ * loop is specialised per colour so each plane is a plain OR or AND
+ * (about 2x faster than a generic masked write: vector games draw many
+ * lines).  Lines entirely on screen skip the per-pixel clipping test.
+ * In OR mode (gfx_or_mode) only the colour's 1 planes are written.
+ */
+#define LINE_PLANE(i, c, OR) do {						\
+		if ((c) >> (i) & 1) q[i] |= bit;				\
+		else if (!(OR)) q[i] &= ~bit;					\
+	} while (0)
+#define LINE_LOOP(c, CLIP, OR) for (;;) {					\
+		if (!(CLIP) || ((unsigned)x0 < SCR_W && (unsigned)y0 < SCR_H)) {	\
+			LINE_PLANE(0, c, OR); LINE_PLANE(1, c, OR);		\
+			LINE_PLANE(2, c, OR); LINE_PLANE(3, c, OR);		\
+		}								\
+		if (!n--)							\
+			break;							\
+		short e2 = err + err;						\
+		if (e2 >= dy) {							\
+			err += dy; x0 += sx;					\
+			if (sx > 0) { if (!(bit >>= 1)) { bit = 0x8000; q += 4; } }	\
+			else if (!(bit = (UWORD)(bit << 1))) { bit = 1; q -= 4; }	\
+		}								\
+		if (e2 <= dx) { err += dx; y0 += sy; q += rowstep; }		\
+	}
+#define LINE_CASE(c) case c:							\
+	if (ormode) { if (clip) LINE_LOOP(c, 1, 1) else LINE_LOOP(c, 0, 1) }	\
+	else { if (clip) LINE_LOOP(c, 1, 0) else LINE_LOOP(c, 0, 0) }		\
+	break;
+
+static void line(UWORD *base, short x0, short y0, short x1, short y1, int col, int ormode)
+{
+	short dx = x1 > x0 ? x1 - x0 : x0 - x1, sx = x0 < x1 ? 1 : -1;
+	short dy = y1 > y0 ? y0 - y1 : y1 - y0, sy = y0 < y1 ? 1 : -1;
+	short err = dx + dy, n = dx > -dy ? dx : -dy;
+	short rowstep = sy > 0 ? SCR_BYTES / SCR_H / 2 : -(SCR_BYTES / SCR_H / 2);
+	int clip = (unsigned)x0 >= SCR_W || (unsigned)x1 >= SCR_W ||
+		   (unsigned)y0 >= SCR_H || (unsigned)y1 >= SCR_H;
+	/* pointer for the start pixel even if it is off screen: it is only
+	 * dereferenced for on-screen pixels, and it steps consistently */
+	UWORD *q = base + (long)y0 * (SCR_BYTES / SCR_H / 2) + ((x0 >> 4) << 2);
+	UWORD bit = 0x8000 >> (x0 & 15);
+
+	switch (col & 15)
+	{
+	LINE_CASE(0) LINE_CASE(1) LINE_CASE(2) LINE_CASE(3)
+	LINE_CASE(4) LINE_CASE(5) LINE_CASE(6) LINE_CASE(7)
+	LINE_CASE(8) LINE_CASE(9) LINE_CASE(10) LINE_CASE(11)
+	LINE_CASE(12) LINE_CASE(13) LINE_CASE(14) LINE_CASE(15)
+	}
+}
+
 void WritePixel(struct RastPort *rp, WORD x, WORD y)
 {
 	if (rp->record)
@@ -231,9 +302,9 @@ void Draw(struct RastPort *rp, WORD x, WORD y)
 		rp->cy = y;
 		return;
 	}
-	int x0 = rp->cx, y0 = map_y(rp->cy), x1 = x, y1 = map_y(y);
-	int bx0 = x0 < x1 ? x0 : x1, bx1 = x0 < x1 ? x1 : x0;
-	int by0 = y0 < y1 ? y0 : y1, by1 = y0 < y1 ? y1 : y0;
+	short x0 = rp->cx, y0 = map_y(rp->cy), x1 = x, y1 = map_y(y);
+	short bx0 = x0 < x1 ? x0 : x1, bx1 = x0 < x1 ? x1 : x0;
+	short by0 = y0 < y1 ? y0 : y1, by1 = y0 < y1 ? y1 : y0;
 
 	rp->cx = x;
 	rp->cy = y;
@@ -262,31 +333,7 @@ void Draw(struct RastPort *rp, WORD x, WORD y)
 		}
 	}
 	else
-	{
-		/* Bresenham */
-		UWORD m[4];
-		int dx = x1 > x0 ? x1 - x0 : x0 - x1, sx = x0 < x1 ? 1 : -1;
-		int dy = y1 > y0 ? y0 - y1 : y1 - y0, sy = y0 < y1 ? 1 : -1;
-		int err = dx + dy;
-		color_masks(rp->apen, m);
-		for (;;)
-		{
-			if ((unsigned)x0 < SCR_W && (unsigned)y0 < SCR_H)
-			{
-				UWORD *q = rp->base + row_off[y0] + ((x0 >> 4) << 2);
-				UWORD bit = 0x8000 >> (x0 & 15), nbit = ~bit;
-				q[0] = (q[0] & nbit) | (bit & m[0]);
-				q[1] = (q[1] & nbit) | (bit & m[1]);
-				q[2] = (q[2] & nbit) | (bit & m[2]);
-				q[3] = (q[3] & nbit) | (bit & m[3]);
-			}
-			if (x0 == x1 && y0 == y1)
-				break;
-			int e2 = 2 * err;
-			if (e2 >= dy) { err += dy; x0 += sx; }
-			if (e2 <= dx) { err += dx; y0 += sy; }
-		}
-	}
+		line(rp->base, x0, y0, x1, y1, rp->apen, rp->ormode);
 	if (bx0 < 0) bx0 = 0;
 	if (by0 < 0) by0 = 0;
 	if (bx1 >= SCR_W) bx1 = SCR_W - 1;
@@ -989,6 +1036,11 @@ void gfx_restore_back(void)
 static int min_vbls = 1;
 static long last_swap;
 
+void gfx_or_mode(int on)
+{
+	rp_screen[0].ormode = rp_screen[1].ormode = on;
+}
+
 void gfx_set_frame_vbls(int n)
 {
 	min_vbls = n < 1 ? 1 : n;
@@ -1217,6 +1269,63 @@ gfx_sprite *gfx_sprite_build_on(gfx_draw_fn fn, const void *ctx, WORD arg, WORD 
 	}
 	Mfree(img);
 	return spr;
+}
+
+/* draw at logical x, y instead of the build row (objects moving
+ * vertically: the 256 -> 200 line mapping of the build row is reused,
+ * at most one row off).  Clipped at all edges.  In OR mode (sprites
+ * over colour 0, see gfx_or_mode) the plane words are only ORed in. */
+void gfx_sprite_draw_xy(struct RastPort *rp, const gfx_sprite *spr, WORD x, WORD y)
+{
+	int g0 = x >> 4, ng, gskip = 0, gcount, r0 = 0, rows, py;
+	const UWORD *d;
+
+	if (!spr)
+		return;
+	ng = gcount = spr->groups;
+	rows = spr->rows;
+	py = y < 0 ? -(int)GFX_Y(-y) : GFX_Y(y);
+	if (x <= -16 * ng || x >= SCR_W || py >= SCR_H || py + rows <= 0)
+		return;
+	d = spr->data[x & 15];
+	if (g0 < 0)
+	{
+		gskip = -g0;
+		gcount -= gskip;
+		g0 = 0;
+	}
+	if (g0 + gcount > SCR_W / 16)
+		gcount = SCR_W / 16 - g0;
+	if (py < 0)
+	{
+		r0 = -py;
+		py = 0;
+	}
+	if (py + rows - r0 > SCR_H)
+		rows = SCR_H - py + r0;
+	for (int r = r0; r < rows; r++)
+	{
+		UWORD *q = rp->base + row_off[py + r - r0] + (g0 << 2);
+		const UWORD *s = d + (r * ng + gskip) * 5;
+		for (int g = 0; g < gcount; g++, q += 4, s += 5)
+		{
+			UWORD m = s[0];
+			if (!m)
+				continue;
+			if (rp->ormode)
+			{
+				q[0] |= s[1]; q[1] |= s[2]; q[2] |= s[3]; q[3] |= s[4];
+				continue;
+			}
+			UWORD k = ~m;
+			q[0] = (q[0] & k) | (s[1] & m);
+			q[1] = (q[1] & k) | (s[2] & m);
+			q[2] = (q[2] & k) | (s[3] & m);
+			q[3] = (q[3] & k) | (s[4] & m);
+		}
+	}
+	if (rp->dirty && gcount > 0)
+		mark(rp, g0 << 4, py, ((g0 + gcount) << 4) - 1, py + rows - r0 - 1);
 }
 
 void gfx_sprite_draw(struct RastPort *rp, const gfx_sprite *spr, WORD x)

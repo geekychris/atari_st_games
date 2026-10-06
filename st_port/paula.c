@@ -1,16 +1,14 @@
 /*
- * Amiga Paula on the Atari Falcon's DMA sound, see fpaula.h.
+ * Amiga Paula on Atari DMA sound (STE/TT, Falcon030), see paula.h.
  */
 #include <osbind.h>
 #include <mint/falcon.h>
 #include <string.h>
-#include "fpaula.h"
+#include "paula.h"
 
 struct Custom custom;
 
-#define RATE     9834			/* CLK10K */
 #define FRAMES   2048			/* ring buffer, stereo 8 bit frames */
-#define AHEAD    512			/* mix this far ahead of playback */
 #define PAULA_HZ 3546895UL		/* PAL Paula clock */
 
 struct voice {
@@ -26,9 +24,11 @@ static UWORD enabled;
 static signed char *ring;
 static void *ring_mem;
 static ULONG wpos;			/* next frame to mix */
-static ULONG step_k;			/* (PAULA_HZ << 16) / RATE */
+static ULONG ahead;			/* mix this far ahead of playback */
+static ULONG step_k;			/* (PAULA_HZ << 16) / rate */
+static int want_rate, rate, falcon;
 static void (*tick_fn)(void);
-static int tick_hz, vbl_hz, tick_acc;
+static long tick_num, tick_den, vbl_hz, tick_acc;
 static volatile int running;
 
 UWORD paula_lock(void)
@@ -87,14 +87,14 @@ void paula_dmacon(UWORD val)
  * Mixing goes straight into the 8 bit stereo ring: each side sums two
  * channels pre-scaled by a volume table to 7 bits ((sample * vol) >> 7),
  * the first channel stored, the second added.  The inner loop is the
- * classic 68k one: integer and fraction position stepped with add/addx.
+ * classic 68000 one: integer and fraction position stepped with add/addx.
  */
 static signed char voltab[65][256];
 
-/* n frames from src at pos (16.16) into every other byte of dst;
- * add = 0 stores, 1 adds.  Returns the new position. */
-extern "C" ULONG paula_run(signed char *dst, int n, const signed char *src,
-			   ULONG pos, ULONG inc, const signed char *vt, int add);
+/* n frames from src at pos (16.16, integer part < 32768) into every
+ * other byte of dst; add = 0 stores, 1 adds.  Returns the new position. */
+ULONG paula_run(signed char *dst, int n, const signed char *src,
+		ULONG pos, ULONG inc, const signed char *vt, int add);
 __asm__(
 	"	.text\n"
 	"	.globl	paula_run\n"
@@ -136,7 +136,7 @@ __asm__(
 	"	rts\n"
 );
 
-/* channel ch into one side of the ring from frame f, n frames.
+/* channel ch into one side of the ring, n frames.
  * add = 0: store (silence where the channel is quiet), 1: add */
 static void mix_voice(int ch, signed char *dst, int n, int add)
 {
@@ -161,10 +161,19 @@ static void mix_voice(int ch, signed char *dst, int n, int add)
 		ULONG end = c->len << 16;
 		ULONG left = (end - c->pos + inc - 1) / inc;	/* frames to block end */
 		int k = left < (ULONG)n ? (int)left : n;
+		/* the inner loop indexes with a 16 bit register: run from a
+		 * base at most 16 KB behind the position and stop before the
+		 * index would pass 32 KB (MOD samples can be 128 KB) */
+		ULONG base = (c->pos >> 16) & ~0x3fffUL;
+		ULONG lpos = c->pos - (base << 16);
+		ULONG room = ((0x7fffUL << 16) - lpos) / inc;
+		if ((ULONG)k > room)
+			k = (int)room;
 		if (vol || !add)
-			c->pos = paula_run(dst, k, c->ptr, c->pos, inc, voltab[vol], add);
+			lpos = paula_run(dst, k, c->ptr + base, lpos, inc, voltab[vol], add);
 		else
-			c->pos += inc * k;
+			lpos += inc * k;
+		c->pos = lpos + (base << 16);
 		dst += 2 * k;
 		n -= k;
 		if (c->pos >= end)
@@ -172,40 +181,75 @@ static void mix_voice(int ch, signed char *dst, int n, int add)
 	}
 }
 
+static int audible(int ch)
+{
+	return v[ch].on && !v[ch].silent && custom.aud[ch].ac_per >= 64;
+}
+
+/* one side: the first audible channel is stored, the second added; a
+ * side with nothing audible is cleared (silent channels still advance) */
+static void mix_side(int a, int b, signed char *dst, int n)
+{
+	int aa = audible(a), ab = audible(b);
+	if (aa)
+	{
+		mix_voice(a, dst, n, 0);
+		mix_voice(b, dst, n, 1);
+	}
+	else if (ab)
+	{
+		mix_voice(b, dst, n, 0);
+		mix_voice(a, dst, n, 1);
+	}
+	else
+	{
+		mix_voice(a, dst, n, 1);	/* advance only */
+		mix_voice(b, dst, n, 1);
+		for (int i = 0; i < n; i++)
+			dst[i * 2] = 0;
+	}
+}
+
 static void mix(ULONG from, int n)
 {
 	signed char *l = ring + from * 2;
-	mix_voice(0, l, n, 0);
-	mix_voice(3, l, n, 1);
-	mix_voice(1, l + 1, n, 0);
-	mix_voice(2, l + 1, n, 1);
+	if (!audible(0) && !audible(1) && !audible(2) && !audible(3))
+	{
+		/* the common case in games: nothing playing */
+		for (int ch = 0; ch < 4; ch++)
+			mix_voice(ch, l, n, 1);
+		memset(l, 0, n * 2);
+		return;
+	}
+	mix_side(0, 3, l, n);
+	mix_side(1, 2, l + 1, n);
 }
 
 static ULONG play_frame(void)
 {
-	/* DMA sound frame address counter (as on the STE) */
+	/* DMA sound frame address counter (STE, TT and Falcon) */
 	ULONG a = ((ULONG)*(volatile UBYTE *)0xffff8909 << 16)
 		| ((ULONG)*(volatile UBYTE *)0xffff890b << 8)
 		| *(volatile UBYTE *)0xffff890d;
 	return ((a - (ULONG)ring) >> 1) & (FRAMES - 1);
 }
 
-extern "C" void paula_vbl(void);
-extern "C" void paula_vbl(void)
+void paula_vbl(void);
+void paula_vbl(void)
 {
 	if (!running)
 		return;
 	if (tick_fn)
 	{
-		tick_acc += tick_hz;
-		while (tick_acc >= vbl_hz)
+		tick_acc += tick_num;
+		while (tick_acc >= vbl_hz * tick_den)
 		{
-			tick_acc -= vbl_hz;
+			tick_acc -= vbl_hz * tick_den;
 			tick_fn();
 		}
 	}
 	ULONG p = play_frame();
-	ULONG target = (p + AHEAD) & (FRAMES - 1);
+	ULONG target = (p + ahead) & (FRAMES - 1);
 	ULONG n = (target - wpos) & (FRAMES - 1);
 	if (n > FRAMES / 2)
 	{
@@ -225,7 +269,7 @@ extern "C" void paula_vbl(void)
 }
 
 /* VBL vector stub: C scratch registers saved, then the old handler */
-extern "C" void paula_vbl_irq(void);
+void paula_vbl_irq(void);
 __asm__(
 	"	.text\n"
 	"	.globl	paula_vbl_irq\n"
@@ -236,11 +280,66 @@ __asm__(
 	"	move.l	paula_old_vbl,-(%sp)\n"
 	"	rts\n"
 );
-extern "C" { void *paula_old_vbl; }
+void *paula_old_vbl;
+
+static long cookie(ULONG id)
+{
+	long *jar = *(long **)0x5a0;
+	if (!jar)
+		return -1;
+	for (; jar[0]; jar += 2)
+		if ((ULONG)jar[0] == id)
+			return jar[1];
+	return -1;
+}
+
+void paula_set_rate(int hz)
+{
+	want_rate = hz;
+}
+
+void paula_set_tick_rate(int num, int den)
+{
+	UWORD sr = paula_lock();
+	tick_num = num;
+	tick_den = den;
+	paula_unlock(sr);
+}
 
 int paula_init(void (*tick)(void), int hz)
 {
-	ring_mem = (void *)Mxalloc(FRAMES * 2 + 16, 0);	/* ST RAM for DMA */
+	long snd = cookie(0x5f534e44);		/* '_SND' */
+	long mch = cookie(0x5f4d4348);		/* '_MCH' */
+	UBYTE ste_mode = 1;
+
+	if (snd < 0 || !(snd & 2))
+		return 1;			/* no DMA sound */
+	falcon = (mch >> 16) == 3;
+
+	if (falcon)
+	{
+		/* 25.175 MHz / 256 / (prescale + 1) */
+		static const struct { int hz, pre; } fr[] = {
+			{ 8195, CLK8K }, { 9834, CLK10K }, { 12292, CLK12K },
+			{ 16390, CLK16K }, { 19668, CLK20K }, { 24585, CLK25K },
+		};
+		int w = want_rate ? want_rate : 9834, best = 1;
+		for (int i = 0; i < 6; i++)
+			if ((fr[i].hz > w ? fr[i].hz - w : w - fr[i].hz) <
+			    (fr[best].hz > w ? fr[best].hz - w : w - fr[best].hz))
+				best = i;
+		rate = fr[best].hz;
+		ste_mode = fr[best].pre;
+		ring_mem = (void *)Mxalloc(FRAMES * 2 + 16, 0);	/* ST RAM */
+	}
+	else
+	{
+		/* STE / TT: 6258, 12517, 25033 Hz (50066 is too costly) */
+		int w = want_rate ? want_rate : 12517;
+		ste_mode = w < 9000 ? 0 : w < 18000 ? 1 : 2;
+		rate = ste_mode == 0 ? 6258 : ste_mode == 1 ? 12517 : 25033;
+		ring_mem = (void *)Malloc(FRAMES * 2 + 16);
+	}
 	if (!ring_mem || (long)ring_mem < 0)
 		return 1;
 	ring = (signed char *)(((ULONG)ring_mem + 15) & ~15UL);
@@ -250,22 +349,40 @@ int paula_init(void (*tick)(void), int hz)
 	for (int vol = 0; vol <= 64; vol++)
 		for (int u = 0; u < 256; u++)
 			voltab[vol][u] = (signed char)(((signed char)u * vol) >> 7);
-	step_k = (ULONG)(((unsigned long long)PAULA_HZ << 16) / RATE);
+	step_k = (ULONG)(((unsigned long long)PAULA_HZ << 16) / rate);
 	tick_fn = tick;
-	tick_hz = hz;
-	vbl_hz = VgetMonitor() == MON_VGA ? 60 : 50;
+	tick_num = hz;
+	tick_den = 1;
 	tick_acc = 0;
+	if (falcon)
+		vbl_hz = VgetMonitor() == MON_VGA ? 60 : 50;
+	else
+		vbl_hz = (*(volatile UBYTE *)0xffff820a & 2) ? 50 : 60;
+	ahead = (ULONG)rate / vbl_hz * 2 + 64;	/* two VBLs plus margin */
 
-	Sndstatus(1);
-	Setmode(STEREO8);
-	Settracks(0, 0);
-	Setmontracks(0);
-	Devconnect(DMAPLAY, DAC, CLK25M, CLK10K, NO_SHAKE);
-	Soundcmd(ADDERIN, MATIN);
-	Soundcmd(LTATTEN, 0);
-	Soundcmd(RTATTEN, 0);
-	Setbuffer(SR_PLAY, ring, ring + FRAMES * 2);
-	Buffoper(SB_PLA_ENA | SB_PLA_RPT);
+	if (falcon)
+	{
+		Sndstatus(1);
+		Setmode(STEREO8);
+		Settracks(0, 0);
+		Setmontracks(0);
+		Devconnect(DMAPLAY, DAC, CLK25M, ste_mode, NO_SHAKE);
+		Soundcmd(ADDERIN, MATIN);
+		Soundcmd(LTATTEN, 0);
+		Soundcmd(RTATTEN, 0);
+		Setbuffer(SR_PLAY, ring, ring + FRAMES * 2);
+		Buffoper(SB_PLA_ENA | SB_PLA_RPT);
+	}
+	else
+	{
+		ULONG s = (ULONG)ring, e = s + FRAMES * 2;
+		volatile UBYTE *r = (volatile UBYTE *)0xffff8900;
+		r[0x01] = 0;			/* stop */
+		r[0x03] = s >> 16; r[0x05] = s >> 8; r[0x07] = s;
+		r[0x0f] = e >> 16; r[0x11] = e >> 8; r[0x13] = e;
+		r[0x21] = ste_mode;		/* stereo 8 bit, rate */
+		r[0x01] = 3;			/* play, repeat */
+	}
 	wpos = (play_frame() + 16) & (FRAMES - 1);
 
 	UWORD sr = paula_lock();
@@ -284,7 +401,10 @@ void paula_exit(void)
 	running = 0;
 	*(void **)0x70 = paula_old_vbl;
 	paula_unlock(sr);
-	Buffoper(0);
+	if (falcon)
+		Buffoper(0);
+	else
+		*(volatile UBYTE *)0xffff8901 = 0;
 	Mfree(ring_mem);
 	ring_mem = NULL;
 }

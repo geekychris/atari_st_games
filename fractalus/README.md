@@ -43,7 +43,7 @@ The joystick also works: directions turn, thrust and brake, and fire fires.
 | | |
 |---|---|
 | `terrain.cpp`, `game.cpp`, `pilots.cpp`, `combat.cpp`, `sfx.cpp`, all headers | **Unmodified.** They compile against the Amiga header shims in `../falcon_port/compat`. |
-| `modplay.c` | **Unmodified.** The original Paula MOD player and track generator. It is compiled as C++ so its `custom.dmacon` writes reach the Paula emulation (`fpaula`), with its entry points renamed `mp_*_raw` (Makefile). |
+| `modplay.c` | **Unmodified.** The original Paula MOD player and track generator. It is compiled as C++ so its `custom.dmacon` writes reach the Paula emulation (`../st_port/paula`), with its entry points renamed `mp_*_raw` (Makefile). |
 | `render.cpp` | Original renderer. `__MINT__` branches add the true-colour fill primitives, display open/flip, the palette into an RGB565 table, and the fast terrain path (below). |
 | `main_falcon.cpp` | The original `main.cpp` (kept as `main.cpp.amiga`) with the AmigaOS parts (libraries, IDCMP, singleton port, DateStamp) replaced by IKBD input, the VBL counter and NatFeats logging. The game loop body (attract / title / restart logic) is copied verbatim. |
 | `march_falcon.c` | The terrain column renderer in 68030 assembly. |
@@ -88,7 +88,7 @@ rendered frame), because the Amiga version was tuned for about 30 fps.
 
 ## Sound
 
-Paula is emulated on the Falcon's DMA sound (`../falcon_port/fpaula`):
+Paula is emulated on the Falcon's DMA sound (`../st_port/paula`, shared with the STE ports):
 - Four channels are mixed Amiga-style (0+3 left, 1+2 right) into an 8-bit
   stereo ring buffer at 9834 Hz, from the VBL interrupt.
 - The mixer uses a volume table and add/addx stepping, with a fast path for

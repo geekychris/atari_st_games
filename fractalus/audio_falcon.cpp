@@ -1,6 +1,6 @@
 /*
  * Atari Falcon port: the original modplay.c (Paula MOD player and track
- * generator) runs unchanged on falcon_port's Paula emulation (fpaula):
+ * generator) runs unchanged on the Paula emulation in st_port/paula:
  * it is compiled as C++ so its custom.dmacon writes reach the emulated
  * DMA control, with its entry points renamed mp_*_raw (see Makefile).
  *
@@ -10,7 +10,7 @@
  * wrapped with interrupts masked, since the tick touches the same state.
  */
 #include "modplay.h"
-#include "fpaula.h"
+#include "paula.h"
 
 extern "C" {
 int  mp_init_raw(void);

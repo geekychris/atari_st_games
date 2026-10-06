@@ -11,16 +11,23 @@ Reads examples/games.ini (the host launcher's game list) and writes:
     <out>/GAMES/<NAME>/THUMB.DAT  160x100 thumbnail of its screenshot
 
 --run starts Hatari on that drive (STE, EmuTOS 1024k, 4 MB) with the
-launcher autostarted; --machine falcon boots a Falcon030 instead, where
-the Falcon games can be started (the ST/STE ones are then greyed out).
+launcher autostarted (--machine falcon: a Falcon030), then stays to
+supervise it: picking a game the machine can't run in the launcher (or
+pressing M) switches Hatari between the STE and the Falcon030 through
+the agent API, and the game starts after the reboot.  Ctrl-C stops the
+supervisor and leaves Hatari running; --no-watch doesn't supervise.
 
 Needs Pillow for the thumbnails (games are listed without one otherwise).
 """
 import argparse
+import json
 import os
 import shutil
 import subprocess
 import sys
+import time
+import urllib.parse
+import urllib.request
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.abspath(os.path.join(HERE, "..", ".."))
@@ -28,6 +35,13 @@ sys.path.insert(0, os.path.join(REPO, "tools", "games"))
 from launcher import Launcher, DEFAULT_INI, RUN_SCRIPT  # noqa: E402
 
 THUMB_W, THUMB_H = 160, 100
+
+# Hatari options per machine for the drive (EmuTOS 1024k for both)
+MACHINES = {
+    "ste": ["--machine", "ste", "--memsize", "4", "--monitor", "rgb", "--dsp", "none"],
+    "megaste": ["--machine", "megaste", "--memsize", "4", "--monitor", "rgb", "--dsp", "none"],
+    "falcon": ["--machine", "falcon", "--memsize", "14", "--monitor", "vga", "--dsp", "none"],
+}
 
 
 def ste_colour(r, g, b):
@@ -113,6 +127,8 @@ def main():
     ap.add_argument("--run", action="store_true", help="start Hatari on the drive")
     ap.add_argument("--machine", default="ste", help="ste (default), megaste or falcon")
     ap.add_argument("--no-sound", action="store_true")
+    ap.add_argument("--no-watch", action="store_true",
+                    help="with --run: start Hatari and return (no machine switching)")
     args = ap.parse_args()
 
     lch = Launcher(args.ini)
@@ -158,19 +174,62 @@ def main():
     print("drive: %s" % out)
 
     if args.run:
+        if args.machine not in MACHINES:
+            sys.exit("--machine: one of %s" % ", ".join(MACHINES))
         if not lch.stop():
             sys.exit("could not stop the running Hatari")
-        falcon = args.machine == "falcon"
-        cmd = [RUN_SCRIPT, "--machine", args.machine]
-        cmd += ["--dsp", "none", "--memsize", "14", "--monitor", "vga"] if falcon \
-            else ["--memsize", "4"]
+        cmd = [RUN_SCRIPT] + MACHINES[args.machine]
         cmd += ["--natfeats", "on", "--harddrive", out, "--auto", "C:\\LAUNCHER.PRG"]
         if args.no_sound or not lch.sound:
             cmd += ["--sound", "off"]
         tos = os.path.join(REPO, "roms/emutos/emutos-1024k-1.4/etos1024k.img")
         env = dict(os.environ, AGENT_TOS=tos, AGENT_PORT=str(lch.port))
-        sys.exit(subprocess.run(cmd, env=env).returncode)
+        flag = os.path.join(out, "SWITCH.ON")
+        if not args.no_watch:
+            open(flag, "w").close()     # tells the launcher switching works
+        r = subprocess.run(cmd, env=env).returncode
+        if r or args.no_watch:
+            sys.exit(r)
+        try:
+            supervise(lch.port)
+        except KeyboardInterrupt:
+            print("\nsupervisor stopped; Hatari keeps running")
+        finally:
+            if os.path.exists(flag):
+                os.remove(flag)
 
+
+def supervise(port):
+    """Follow the launcher's console lines; "LAUNCHER SWITCH <machine>"
+    reconfigures Hatari (a cold boot into the launcher on the new
+    machine).  Returns when Hatari quits."""
+    api = "http://127.0.0.1:%d" % port
+    seen = None
+    print("Supervising Hatari: pick a game for the other machine (or press M in "
+          "the launcher) to switch. Ctrl-C to stop.")
+    while True:
+        try:
+            with urllib.request.urlopen(api + "/console", timeout=2) as r:
+                text = json.load(r)["text"]
+        except OSError:
+            print("Hatari has quit")
+            return
+        if seen is None or len(text) < seen:
+            seen = len(text) if seen is None else 0
+        new, seen = text[seen:], len(text)
+        for line in new.splitlines():
+            if line.startswith("LAUNCHER SWITCH "):
+                machine = line.split()[2]
+                if machine not in MACHINES:
+                    continue
+                print("Switching to %s..." % machine)
+                body = urllib.parse.urlencode({"args": " ".join(MACHINES[machine])}).encode()
+                try:
+                    urllib.request.urlopen(urllib.request.Request(
+                        api + "/config", data=body, method="POST"), timeout=20).read()
+                except OSError as e:
+                    print("switch failed: %s" % e)
+        time.sleep(0.5)
 
 if __name__ == "__main__":
     main()

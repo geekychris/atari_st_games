@@ -80,6 +80,32 @@ void gfx_mark(struct RastPort *rp, WORD x0, WORD y0, WORD x1, WORD y1);	/* logic
 void gfx_or16_row(struct RastPort *rp, const WORD *xs, int n, WORD y,
                   const UWORD *rows, int h, int col);
 
+/* Full-width bands that are completely redrawn every frame (e.g. lanes
+ * of traffic): copy logical rows y0..y1 from the background into the
+ * back buffer, then draw into gfx_back_nomark(), which doesn't record
+ * dirty rectangles.  Cheaper than many small dirty rectangles.
+ */
+void gfx_copy_band(WORD y0, WORD y1);
+/* fill rows y0..y1 of the back buffer with a solid colour (movem
+ * stores: about twice as fast as copying from the background) */
+void gfx_fill_band(WORD y0, WORD y1, int col);
+struct RastPort *gfx_back_nomark(void);
+
+/* Pre-shifted masked sprites (the classic ST technique): 'fn' draws the
+ * object with the normal RastPort calls at logical (x, y) = (0..w-1,
+ * y..y+h-1); it's rendered once into a scratch buffer, over colour 0 and
+ * over colour 15 to derive the transparency mask, and stored in 16
+ * pre-shifted copies so drawing needs no shifting.  y is part of the
+ * sprite (the 256 -> 200 line mapping depends on it).  w <= 112.
+ */
+typedef struct gfx_sprite gfx_sprite;
+gfx_sprite *gfx_sprite_build(gfx_draw_fn fn, const void *ctx, WORD arg, WORD y, WORD w, WORD h);
+/* same, but composited onto solid colour 'bg': every group is opaque
+ * (a plain copy, ~5x faster to draw).  For objects that only ever
+ * appear on that colour and don't overlap (logs on water...). */
+gfx_sprite *gfx_sprite_build_on(gfx_draw_fn fn, const void *ctx, WORD arg, WORD y, WORD w, WORD h, int bg);
+void gfx_sprite_draw(struct RastPort *rp, const gfx_sprite *spr, WORD x);
+
 /* clear a RastPort's whole buffer to colour 0 (scenery layer use) */
 void gfx_clear(struct RastPort *rp);
 

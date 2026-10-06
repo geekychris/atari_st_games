@@ -9,12 +9,16 @@
 #   make STRIP=-s    # strip symbols (smaller PRG; default keeps them for
 #                    # the Hatari profiler / debugger)
 
+# -fno-defer-pop: the ports run in supervisor mode between Super(0L) and
+# Super(old_ssp) in main(); EmuTOS's Super() restores the user stack
+# pointer saved by the first call, so the stack must be at the same depth
+# at both calls (GCC otherwise leaves earlier call arguments on it)
 CROSS   ?= m68k-atari-mintelf-
 CC       = $(CROSS)gcc
 CXX      = $(CROSS)g++
 PORT    := $(dir $(lastword $(MAKEFILE_LIST)))
 CPU     ?= -m68000
-CFLAGS   = $(CPU) -O2 -fomit-frame-pointer -Wall -Wno-unused-function -I. -I$(PORT) -I$(PORT)compat $(EXTRA_CFLAGS)
+CFLAGS   = $(CPU) -O2 -fomit-frame-pointer -fno-defer-pop -Wall -Wno-unused-function -I. -I$(PORT) -I$(PORT)compat $(EXTRA_CFLAGS)
 STRIP   ?=
 OUT      = build
 PRG      = $(OUT)/$(NAME).PRG

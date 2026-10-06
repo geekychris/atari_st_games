@@ -155,6 +155,60 @@ static int frames_until(ULONG dist, ULONG inc, int n)
 	return q < n ? q : n;
 }
 
+/* Same, for a block that loops on itself (short waveforms, the location
+ * registers point at the block being played): the position wraps at
+ * 'len' (bytes, < 32768) inside the loop instead of returning to C at
+ * every block end.  Returns the new position. */
+ULONG paula_run_loop(signed char *dst, int n, const signed char *src,
+		     ULONG pos, ULONG inc, const signed char *vt, int add, int len);
+__asm__(
+	"	.text\n"
+	"	.globl	paula_run_loop\n"
+	"paula_run_loop:\n"
+	"	movem.l	%d2-%d7/%a2,-(%sp)\n"
+	"	move.l	32(%sp),%a0\n"		/* dst */
+	"	move.l	36(%sp),%d0\n"		/* n */
+	"	move.l	40(%sp),%a1\n"		/* src */
+	"	move.l	44(%sp),%d1\n"		/* pos */
+	"	move.l	48(%sp),%d4\n"		/* inc */
+	"	move.l	52(%sp),%a2\n"		/* vt */
+	"	move.l	60(%sp),%d7\n"		/* len */
+	"	move.w	%d1,%d3\n"
+	"	swap	%d1\n"
+	"	move.l	%d4,%d5\n"
+	"	swap	%d5\n"
+	"	moveq	#0,%d2\n"
+	"	subq.l	#1,%d0\n"
+	"	bmi.s	9f\n"
+	"	tst.l	56(%sp)\n"
+	"	bne.s	3f\n"
+	"1:	move.b	(%a1,%d1.w),%d2\n"
+	"	move.b	(%a2,%d2.w),(%a0)\n"
+	"	addq.l	#2,%a0\n"
+	"	add.w	%d4,%d3\n"
+	"	addx.w	%d5,%d1\n"
+	"	cmp.w	%d7,%d1\n"
+	"	bcs.s	2f\n"
+	"	sub.w	%d7,%d1\n"
+	"2:	dbra	%d0,1b\n"
+	"	bra.s	9f\n"
+	"3:	move.b	(%a1,%d1.w),%d2\n"
+	"	move.b	(%a2,%d2.w),%d6\n"
+	"	add.b	%d6,(%a0)\n"
+	"	addq.l	#2,%a0\n"
+	"	add.w	%d4,%d3\n"
+	"	addx.w	%d5,%d1\n"
+	"	cmp.w	%d7,%d1\n"
+	"	bcs.s	4f\n"
+	"	sub.w	%d7,%d1\n"
+	"4:	dbra	%d0,3b\n"
+	"9:	swap	%d1\n"
+	"	move.w	%d3,%d1\n"
+	"	move.l	%d1,%d0\n"
+	"	movem.l	(%sp)+,%d2-%d7/%a2\n"
+	"	rts\n"
+);
+
 /* channel ch into one side of the ring, n frames.
  * add = 0: store (silence where the channel is quiet), 1: add */
 static void mix_voice(int ch, signed char *dst, int n, int add)
@@ -174,6 +228,14 @@ static void mix_voice(int ch, signed char *dst, int n, int add)
 	if (c->on && c->silent
 	    && (const signed char *)custom.aud[ch].ac_ptr != c->ptr)
 		latch(ch);	/* registers changed while looping silence */
+	/* a short block looping on itself: wrap inside the asm loop */
+	if (c->on && !c->silent && inc && c->len <= 0x4000 && (inc >> 16) < c->len && (vol || !add) &&
+	    (const signed char *)custom.aud[ch].ac_ptr == c->ptr &&
+	    (ULONG)custom.aud[ch].ac_len * 2 == c->len)
+	{
+		c->pos = paula_run_loop(dst, n, c->ptr, c->pos, inc, voltab[vol], add, (int)c->len);
+		return;
+	}
 	while (n > 0)
 	{
 		if (!c->on || !inc || c->silent)

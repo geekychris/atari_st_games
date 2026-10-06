@@ -112,6 +112,8 @@ static void mouse_show(void)
 	__asm__ volatile (".dc.w 0xa009" : : : "d0", "d1", "d2", "a0", "a1", "a2", "memory");
 }
 
+static void add_dirty(struct DirtyList *d, int g0, int g1, int y0, int y1);
+
 static void mark(struct RastPort *rp, short x0, short y0, short x1, short y1)
 {
 	struct DirtyList *d = rp->dirty;
@@ -993,6 +995,28 @@ void gfx_bg_clear(void)
 	memset(scenery, 0, SCR_BYTES);
 }
 
+void gfx_bg_commit_rows(WORD y0, WORD y1)
+{
+	int py0 = map_y(y0), py1 = map_y(y1);
+	if (py0 < 0) py0 = 0;
+	if (py1 >= SCR_H) py1 = SCR_H - 1;
+	if (py0 <= py1)
+		memcpy(bgscreen + row_off[py0], scenery + row_off[py0],
+		       (py1 - py0 + 1) * LINE_W * 2);
+}
+
+void gfx_bg_dirty_rows(WORD y0, WORD y1)
+{
+	int py0 = map_y(y0), py1 = map_y(y1);
+	if (py0 < 0) py0 = 0;
+	if (py1 >= SCR_H) py1 = SCR_H - 1;
+	if (py0 <= py1)
+	{
+		add_dirty(&dirty[0], 0, SCR_W / 16 - 1, py0, py1);
+		add_dirty(&dirty[1], 0, SCR_W / 16 - 1, py0, py1);
+	}
+}
+
 void gfx_bg_to_screens(void)
 {
 	memcpy(bgscreen, scenery, SCR_BYTES);
@@ -1377,15 +1401,34 @@ void gfx_hud_commit(void)
 		n_erased++;
 	}
 
-	/* draw new operations, and old ones hit by an erase */
+	/* draw new operations, and old ones hit by an erase or drawn over
+	 * by an earlier redrawn one (painter's order: a HUD background
+	 * rectangle redrawn because one number changed must not cover the
+	 * unchanged labels drawn after it) */
+	enum { MAX_AREAS = 16 };
+	struct Op area[MAX_AREAS];
+	int drawn = 0;
 	for (i = 0; i < n_cur; i++)
 	{
 		struct Op *c = &cur_ops[i];
 		int draw = !c->matched;
 		for (j = 0; !draw && n_erased && j < n_prev; j++)
 			draw = prev_ops[j].type == 0xff && op_overlaps(c, &prev_ops[j]);
+		for (j = 0; !draw && j < drawn; j++)
+			draw = op_overlaps(c, &area[j]);
 		if (draw)
 		{
+			if (drawn < MAX_AREAS)
+				area[drawn++] = *c;
+			else
+			{
+				/* too many: widen the last one */
+				struct Op *a = &area[MAX_AREAS - 1];
+				if (c->g0 < a->g0) a->g0 = c->g0;
+				if (c->g1 > a->g1) a->g1 = c->g1;
+				if (c->by0 < a->by0) a->by0 = c->by0;
+				if (c->by1 > a->by1) a->by1 = c->by1;
+			}
 			op_draw(c);
 			add_dirty(&dirty[0], c->g0, c->g1, c->by0, c->by1);
 			add_dirty(&dirty[1], c->g0, c->g1, c->by0, c->by1);

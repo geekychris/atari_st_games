@@ -38,6 +38,7 @@ void Draw(struct RastPort *rp, WORD x, WORD y);
 void RectFill(struct RastPort *rp, WORD x0, WORD y0, WORD x1, WORD y1);
 void WritePixel(struct RastPort *rp, WORD x, WORD y);
 void Text(struct RastPort *rp, const char *str, ULONG len);
+void SetRast(struct RastPort *rp, ULONG pen);	/* no-op on the HUD layer */
 
 /* Cached composite drawing for the HUD layer.  'fn' draws something
  * made of many primitives (scaled text, a shield bitmap...) and is
@@ -63,6 +64,22 @@ void gfx_big(struct RastPort *rp, const char *str, WORD x, WORD y, WORD scale,
  */
 void gfx_mask16(struct RastPort *rp, WORD x, WORD y, const UWORD *rows, int h, int col);
 
+/* Fastest sprite path for many small sprites over colour 0 areas:
+ * ORs the mask into the planes where 'col' has a 1 bit (no
+ * read-modify-write of the other planes) and doesn't mark dirty areas:
+ * call gfx_mark() once for the whole group's bounding box instead.
+ */
+void gfx_or16(struct RastPort *rp, WORD x, WORD y, const UWORD *rows, int h, int col);
+void gfx_mark(struct RastPort *rp, WORD x0, WORD y0, WORD x1, WORD y1);	/* logical */
+
+/* Same for a horizontal row of identical sprites (an invader row):
+ * the Y mapping, colour planes and pre-shifted masks (sprites at a
+ * fixed spacing need only two shifts) are worked out once; xs[] holds
+ * the n sprite x positions.  Marks the row's dirty area itself.
+ */
+void gfx_or16_row(struct RastPort *rp, const WORD *xs, int n, WORD y,
+                  const UWORD *rows, int h, int col);
+
 /* clear a RastPort's whole buffer to colour 0 (scenery layer use) */
 void gfx_clear(struct RastPort *rp);
 
@@ -87,6 +104,7 @@ void gfx_bg_clear(void);
 void gfx_bg_to_screens(void);		/* after scenery changes */
 struct RastPort *gfx_hud(void);		/* HUD layer (records operations) */
 void gfx_hud_commit(void);		/* render HUD changes of this frame */
+void gfx_hud_keep(void);		/* instead of drawing + commit: HUD unchanged */
 void gfx_restore_back(void);		/* undo last sprites in back buffer */
 struct RastPort *gfx_back(void);	/* sprite layer: back buffer */
 void gfx_swap(void);			/* show back buffer from next VBL */

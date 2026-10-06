@@ -53,6 +53,7 @@ void ikbd_mouse_delta(WORD *dx, WORD *dy);
 #define SC_A      0x1e
 #define SC_S      0x1f
 #define SC_D      0x20
+#define SC_L      0x26
 #define SC_M      0x32
 #define SC_LSHIFT 0x2a
 #define SC_Z      0x2c

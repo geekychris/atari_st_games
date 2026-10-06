@@ -35,6 +35,10 @@ void RectFill(struct RastPort *rp, LONG x0, LONG y0, LONG x1, LONG y1);
 void WritePixel(struct RastPort *rp, LONG x, LONG y);
 void Text(struct RastPort *rp, const char *str, ULONG len);
 void SetRast(struct RastPort *rp, ULONG pen);
+/* filled polygons (convex), no TmpRas / AreaInfo needed */
+LONG AreaMove(struct RastPort *rp, LONG x, LONG y);
+LONG AreaDraw(struct RastPort *rp, LONG x, LONG y);
+LONG AreaEnd(struct RastPort *rp);
 
 int  fgfx_init(void);			/* 0 = ok */
 void fgfx_exit(void);

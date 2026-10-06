@@ -15,6 +15,13 @@
  * is up.  Games the machine can't run (an STE game on a plain ST, a
  * Falcon game on an STE) are listed but can't be started.
  *
+ * Switching machines: when make_drive.py --run supervises Hatari, it
+ * creates C:\SWITCH.ON.  Then Return on a game this machine can't run (or
+ * M for the other machine) writes the game to C:\LAUNCHER.NXT and logs
+ * "LAUNCHER SWITCH falcon" (or "ste"); the supervisor reconfigures Hatari
+ * through the agent API, the machine reboots into the launcher, and the
+ * launcher starts the game from LAUNCHER.NXT.
+ *
  * With Hatari --natfeats on, the launcher logs "LAUNCHER ..." lines.
  */
 #include <osbind.h>
@@ -43,6 +50,7 @@ struct game {
 static struct game games[MAX_GAMES];
 static int ngames, sel, top;
 static long mch;			/* _MCH cookie: machine type */
+static int can_switch;			/* C:\SWITCH.ON: a host supervisor */
 
 /* menu pens 0-7 (pens 8-15 are the thumbnail's) */
 enum { P_BG, P_TEXT, P_TITLE, P_SEL, P_DIM, P_HEAD, P_WARN, P_WHITE };
@@ -53,7 +61,7 @@ static UWORD old_pal[16];
 
 static void log_line(const char *msg)
 {
-	char buf[120];
+	char buf[160];
 	snprintf(buf, sizeof(buf), "LAUNCHER %s\n", msg);
 	nf_print(buf);
 }
@@ -296,7 +304,8 @@ static void draw_all(void)
 	out("\033E\033f");			/* clear, cursor off */
 	snprintf(head, sizeof(head), " GAME PORTS                  %-10s", machine_name());
 	field(0, 0, 40, head, P_WHITE, P_SEL);
-	field(24, 0, 39, " Up/Down select  Return/Fire play  Esc", P_DIM, P_BG);
+	field(24, 0, 39, can_switch ? " Up/Down  Return/Fire play  M machine"
+	                            : " Up/Down select  Return/Fire play  Esc", P_DIM, P_BG);
 	draw_list();
 	draw_info();
 }
@@ -330,6 +339,62 @@ static void select_game(int i)
 		draw_entry(sel);
 	}
 	draw_info();
+}
+
+static int is_falcon(void) { return (mch >> 16) == 3; }
+
+/* message line above the description */
+static void message(const char *s, int pen)
+{
+	field(TEXT_ROW - 1, 0, 40, s, pen, P_BG);
+}
+
+/* ask the host supervisor to reboot as the other machine, then start
+ * game g there (NULL: just the menu) */
+static void request_switch(const struct game *g)
+{
+	const char *to = is_falcon() ? "ste" : "falcon";
+	char msg[48];
+
+	if (g && !strcmp(g->machine, "falcon"))
+		to = "falcon";
+	else if (g)
+		to = "ste";
+	if (!can_switch) {
+		message(g ? needs(g) : "Switching needs make_drive.py --run", P_WARN);
+		return;
+	}
+	Fdelete("C:\\LAUNCHER.NXT");
+	if (g) {
+		long fh = Fcreate("C:\\LAUNCHER.NXT", 0);
+		if (fh >= 0) {
+			Fwrite((short)fh, strlen(g->id), g->id);
+			Fclose((short)fh);
+		}
+	}
+	snprintf(msg, sizeof(msg), "Restarting as %s...", strcmp(to, "falcon") ? "an STE" : "a Falcon030");
+	message(msg, P_HEAD);
+	snprintf(msg, sizeof(msg), "SWITCH %s", to);
+	log_line(msg);
+}
+
+/* the game LAUNCHER.NXT asks for after a machine switch, or -1 */
+static int next_game(void)
+{
+	char id[24];
+	long fh = Fopen("C:\\LAUNCHER.NXT", 0), n;
+	if (fh < 0)
+		return -1;
+	n = Fread((short)fh, sizeof(id) - 1, id);
+	Fclose((short)fh);
+	Fdelete("C:\\LAUNCHER.NXT");
+	if (n <= 0)
+		return -1;
+	id[n] = 0;
+	for (int i = 0; i < ngames; i++)
+		if (!strcmp(games[i].id, trim(id)))
+			return i;
+	return -1;
 }
 
 /* the menu; returns the game to start, or -1 to quit */
@@ -366,6 +431,16 @@ static int menu(void)
 		if (ikbd_key_hit(SC_RETURN) || ikbd_key_hit(SC_SPACE) || (hits & 0x80)) {
 			if (runnable(&games[sel]))
 				choice = sel;
+			else {
+				Super((void *)ssp);
+				request_switch(&games[sel]);
+				ssp = Super(0L);
+			}
+		}
+		if (ikbd_key_hit(SC_M)) {
+			Super((void *)ssp);
+			request_switch(NULL);
+			ssp = Super(0L);
 		}
 		if (ikbd_key_hit(SC_ESC))
 			choice = -1;
@@ -381,7 +456,7 @@ static int menu(void)
 
 static void play(const struct game *g)
 {
-	char dir[40], msg[80];
+	char dir[40], msg[128];
 	long r;
 
 	out("\033E");
@@ -415,9 +490,21 @@ int main(void)
 	/* start on the first game this machine can run */
 	for (sel = 0; sel < ngames - 1 && !runnable(&games[sel]); sel++)
 		;
+	{
+		long fh = Fopen("C:\\SWITCH.ON", 0);
+		can_switch = fh >= 0;
+		if (fh >= 0)
+			Fclose((short)fh);
+	}
+	int next = next_game();			/* after a machine switch */
+	if (next >= 0)
+		sel = next;
 	top = sel >= LIST_ROWS ? sel - LIST_ROWS + 1 : 0;
-	snprintf(msg, sizeof(msg), "START games=%d machine=%s", ngames, machine_name());
+	snprintf(msg, sizeof(msg), "START games=%d machine=%s switch=%d", ngames, machine_name(),
+		 can_switch);
 	log_line(msg);
+	if (next >= 0 && runnable(&games[next]))
+		play(&games[next]);
 
 	for (;;) {
 		int i = menu();

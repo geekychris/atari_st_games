@@ -184,6 +184,18 @@ static void span(UWORD *base, int x0, int x1, int y, int col)
 /* graphics.library subset */
 
 void SetAPen(struct RastPort *rp, ULONG pen) { rp->apen = pen & 15; }
+
+/* fill whole RastPort; on the HUD layer the background already is the
+ * scenery, so it's ignored there (use scenery colour 0 = cleared) */
+void SetRast(struct RastPort *rp, ULONG pen)
+{
+	UBYTE old = rp->apen;
+	if (rp->record)
+		return;
+	rp->apen = pen & 15;
+	RectFill(rp, 0, 0, 319, 255);
+	rp->apen = old;
+}
 void SetBPen(struct RastPort *rp, ULONG pen) { rp->bpen = pen & 15; }
 
 void Move(struct RastPort *rp, WORD x, WORD y)
@@ -590,6 +602,131 @@ void gfx_big(struct RastPort *rp, const char *str, WORD x, WORD y, WORD scale,
 	           width, 7 * scale);
 }
 
+void gfx_or16(struct RastPort *rp, WORD x, WORD y, const UWORD *rows, int h, int col)
+{
+	int shift = 16 - (x & 15), g = x >> 4;
+	int p0 = col & 1, p1 = col & 2, p2 = col & 4, p3 = col & 8;
+
+	if (x <= -16 || x >= SCR_W)
+		return;
+	for (int r = 0; r < h; r++)
+	{
+		int py = map_y(y + r);
+		if ((unsigned)py >= SCR_H || !rows[r])
+			continue;
+		ULONG m = (ULONG)rows[r] << shift;
+		UWORD hi = m >> 16, lo = m;
+		UWORD *q = rp->base + row_off[py] + (g << 2);
+		if (g >= 0 && hi)
+		{
+			if (p0) q[0] |= hi;
+			if (p1) q[1] |= hi;
+			if (p2) q[2] |= hi;
+			if (p3) q[3] |= hi;
+		}
+		if (lo && g + 1 < SCR_W / 16)
+		{
+			if (p0) q[4] |= lo;
+			if (p1) q[5] |= lo;
+			if (p2) q[6] |= lo;
+			if (p3) q[7] |= lo;
+		}
+	}
+}
+
+void gfx_or16_row(struct RastPort *rp, const WORD *xs, int n, WORD y,
+                  const UWORD *rows, int h, int col)
+{
+	UWORD off[16], mask[16];
+	UWORD hi[2][16], lo[2][16];
+	int shifts[2] = { -1, -1 };
+	int nr = 0, last = -1, p0 = -1, p1 = -1, nplanes = 0;
+	int ymin = SCR_H, ymax = -1, xmin = SCR_W, xmax = -1;
+
+	/* distinct physical rows (rows mapping to the same line are merged) */
+	for (int r = 0; r < h && r < 16; r++)
+	{
+		int py = map_y(y + r);
+		if ((unsigned)py >= SCR_H)
+			continue;
+		if (py == last)
+			mask[nr - 1] |= rows[r];
+		else
+		{
+			off[nr] = row_off[py];
+			mask[nr++] = rows[r];
+			last = py;
+			if (py < ymin) ymin = py;
+			ymax = py;
+		}
+	}
+	if (!nr)
+		return;
+	for (int p = 0; p < 4; p++)
+		if (col & (1 << p))
+		{
+			if (p0 < 0) p0 = p; else if (p1 < 0) p1 = p;
+			nplanes++;
+		}
+	if (nplanes > 2)
+		nplanes = 2;	/* (invader colours use at most 2 planes) */
+
+	for (int i = 0; i < n; i++)
+	{
+		int x = xs[i];
+		if (x < 0 || x > SCR_W - 16)
+			continue;
+		int sh = x & 15, k;
+		/* sprites at a fixed spacing only use a couple of shifts */
+		if (shifts[0] == sh) k = 0;
+		else if (shifts[1] == sh) k = 1;
+		else
+		{
+			k = shifts[0] < 0 ? 0 : 1;
+			shifts[k] = sh;
+			for (int r = 0; r < nr; r++)
+			{
+				ULONG m = (ULONG)mask[r] << (16 - sh);
+				hi[k][r] = m >> 16;
+				lo[k][r] = m;
+			}
+		}
+		if (x < xmin) xmin = x;
+		if (x > xmax) xmax = x;
+		UWORD *base = rp->base + ((x >> 4) << 2);
+		const UWORD *h1 = hi[k], *l1 = lo[k];
+		if (nplanes == 1)
+			for (int r = 0; r < nr; r++)
+			{
+				UWORD *q = base + off[r] + p0;
+				q[0] |= h1[r];
+				q[4] |= l1[r];
+			}
+		else
+			for (int r = 0; r < nr; r++)
+			{
+				UWORD *q = base + off[r];
+				q[p0] |= h1[r];
+				q[p0 + 4] |= l1[r];
+				q[p1] |= h1[r];
+				q[p1 + 4] |= l1[r];
+			}
+	}
+	if (xmax >= 0)
+		mark(rp, xmin, ymin, xmax + 15, ymax);
+}
+
+void gfx_mark(struct RastPort *rp, WORD x0, WORD y0, WORD x1, WORD y1)
+{
+	int py0 = map_y(y0), py1 = map_y(y1);
+	if (x0 < 0) x0 = 0;
+	if (x1 >= SCR_W) x1 = SCR_W - 1;
+	if (py0 < 0) py0 = 0;
+	if (py1 >= SCR_H) py1 = SCR_H - 1;
+	if (x0 <= x1 && py0 <= py1)
+		mark(rp, x0, py0, x1, py1);
+}
+
 void gfx_clear(struct RastPort *rp)
 {
 	memset(rp->base, 0, SCR_BYTES);
@@ -709,6 +846,11 @@ static void op_draw(const struct Op *op)
  * anything overlapping an erased area are drawn, all into the
  * background buffer; touched areas are invalidated on both screens.
  */
+void gfx_hud_keep(void)
+{
+	n_cur = 0;		/* previous frame's HUD stays as it is */
+}
+
 void gfx_hud_commit(void)
 {
 	int i, j, n_erased = 0;

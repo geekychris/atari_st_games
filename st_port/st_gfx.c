@@ -26,16 +26,19 @@ static struct DirtyList dirty[2];
 static struct RastPort rp_screen[2], rp_scenery, rp_hud, rp_draw;
 
 /* HUD layer: operations recorded this frame vs. last frame */
-enum { OP_PIXEL, OP_LINE, OP_RECT, OP_TEXT, OP_BIG };
+enum { OP_PIXEL, OP_LINE, OP_RECT, OP_TEXT, OP_CUSTOM };
 #define MAX_OPS  200
 #define TEXT_MAX 40
+/* (OP_CUSTOM keys longer than TEXT_MAX are truncated) */
 struct Op {
 	UBYTE type, apen, bpen, len;
 	WORD x0, y0, x1, y1;		/* logical coordinates */
 	WORD g0, g1, by0, by1;		/* physical bbox: groups, rows */
 	UBYTE matched;
-	gfx_big_fn big;			/* OP_BIG: drawing function */
-	char text[TEXT_MAX];
+	gfx_draw_fn fn;			/* OP_CUSTOM: drawing function */
+	const void *ctx;		/* OP_CUSTOM: context, or NULL = text */
+	WORD arg;
+	char text[TEXT_MAX];		/* text, or OP_CUSTOM key bytes */
 };
 static struct Op ops_a[MAX_OPS], ops_b[MAX_OPS];
 static struct Op *cur_ops = ops_a, *prev_ops = ops_b;
@@ -521,7 +524,7 @@ static void record(struct RastPort *rp, int type, int x0, int y0, int x1, int y1
 	op->bpen = rp->bpen;
 	op->x0 = x0; op->y0 = y0; op->x1 = x1; op->y1 = y1;
 	op->len = 0;
-	if (type == OP_TEXT || type == OP_BIG)
+	if (type == OP_TEXT || type == OP_CUSTOM)
 	{
 		if (len > TEXT_MAX)
 			len = TEXT_MAX;
@@ -536,12 +539,11 @@ static void record(struct RastPort *rp, int type, int x0, int y0, int x1, int y1
 		py0 = map_y(y0) - 6;
 		py1 = py0 + 7;
 	}
-	else if (type == OP_BIG)
+	else if (type == OP_CUSTOM)
 	{
-		/* x1 = right edge, y1 = scale; glyphs are 7 rows high */
-		px1 = x1;
+		/* x1/y1 = bottom right corner (logical) */
 		py0 = map_y(y0);
-		py1 = map_y(y0 + 7 * y1 - 1);
+		py1 = map_y(y1);
 	}
 	else
 	{
@@ -563,18 +565,62 @@ static void record(struct RastPort *rp, int type, int x0, int y0, int x1, int y1
 	n_cur++;
 }
 
-void gfx_big(struct RastPort *rp, const char *str, WORD x, WORD y, WORD scale,
-             WORD width, gfx_big_fn draw)
+void gfx_cached(struct RastPort *rp, gfx_draw_fn fn, const void *key, int keylen,
+                const void *ctx, WORD x, WORD y, WORD arg, WORD w, WORD h)
 {
 	if (!rp->record)
 	{
-		draw(rp, str, x, y, scale);
+		fn(rp, ctx ? ctx : key, x, y, arg);
 		return;
 	}
 	int n0 = n_cur;
-	record(rp, OP_BIG, x, y, x + width - 1, scale, str, strlen(str));
+	record(rp, OP_CUSTOM, x, y, x + w - 1, y + h - 1, key, keylen);
 	if (n_cur > n0)
-		cur_ops[n0].big = draw;
+	{
+		cur_ops[n0].fn = fn;
+		cur_ops[n0].ctx = ctx;
+		cur_ops[n0].arg = arg;
+	}
+}
+
+void gfx_big(struct RastPort *rp, const char *str, WORD x, WORD y, WORD scale,
+             WORD width, gfx_big_fn draw)
+{
+	gfx_cached(rp, (gfx_draw_fn)draw, str, strlen(str) + 1, NULL, x, y, scale,
+	           width, 7 * scale);
+}
+
+void gfx_clear(struct RastPort *rp)
+{
+	memset(rp->base, 0, SCR_BYTES);
+}
+
+void gfx_mask16(struct RastPort *rp, WORD x, WORD y, const UWORD *rows, int h, int col)
+{
+	const UWORD *c = cmask[col & 15];
+	int shift = x & 15, g = x >> 4, ymin = SCR_H, ymax = -1;
+
+	if (x <= -16 || x >= SCR_W)
+		return;
+	for (int r = 0; r < h; r++)
+	{
+		int py = map_y(y + r);
+		if ((unsigned)py >= SCR_H || !rows[r])
+			continue;
+		if (py < ymin) ymin = py;
+		if (py > ymax) ymax = py;
+		ULONG m = (ULONG)rows[r] << (16 - shift);
+		UWORD *q = rp->base + row_off[py] + (g << 2);
+		if (g >= 0)
+			group_set(q, m >> 16, c);
+		if ((m & 0xffff) && g + 1 < SCR_W / 16)
+			group_set(q + 4, m, c);
+	}
+	if (ymax >= 0)
+	{
+		int x0 = x < 0 ? 0 : x, x1 = x + 15 >= SCR_W ? SCR_W - 1 : x + 15;
+		mark(rp, x0, ymin, x1, ymax);
+	}
 }
 
 static int op_equal(const struct Op *a, const struct Op *b)
@@ -582,7 +628,8 @@ static int op_equal(const struct Op *a, const struct Op *b)
 	return a->type == b->type && a->apen == b->apen && a->x0 == b->x0 &&
 	       a->y0 == b->y0 && a->x1 == b->x1 && a->y1 == b->y1 &&
 	       (a->type != OP_TEXT || a->bpen == b->bpen) &&
-	       ((a->type != OP_TEXT && a->type != OP_BIG) ||
+	       (a->type != OP_CUSTOM || (a->fn == b->fn && a->arg == b->arg)) &&
+	       ((a->type != OP_TEXT && a->type != OP_CUSTOM) ||
 	        (a->len == b->len && memcmp(a->text, b->text, a->len) == 0));
 }
 
@@ -651,14 +698,9 @@ static void op_draw(const struct Op *op)
 		Move(&rp_draw, op->x0, op->y0);
 		Text(&rp_draw, op->text, op->len);
 		break;
-	case OP_BIG:
-	{
-		char buf[TEXT_MAX + 1];
-		memcpy(buf, op->text, op->len);
-		buf[op->len] = '\0';
-		op->big(&rp_draw, buf, op->x0, op->y0, op->y1);
+	case OP_CUSTOM:
+		op->fn(&rp_draw, op->ctx ? op->ctx : op->text, op->x0, op->y0, op->arg);
 		break;
-	}
 	}
 }
 

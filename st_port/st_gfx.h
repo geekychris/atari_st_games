@@ -39,12 +39,32 @@ void RectFill(struct RastPort *rp, WORD x0, WORD y0, WORD x1, WORD y1);
 void WritePixel(struct RastPort *rp, WORD x, WORD y);
 void Text(struct RastPort *rp, const char *str, ULONG len);
 
-/* Composite drawing (e.g. big block-letter text) recorded as one HUD
- * operation: 'draw' is called with a non-recording RastPort when needed.
+/* Cached composite drawing for the HUD layer.  'fn' draws something
+ * made of many primitives (scaled text, a shield bitmap...) and is
+ * recorded as ONE operation identified by fn + key bytes + x/y/arg:
+ * it's only re-rendered when that identity changes.  Up to 40 key
+ * bytes are copied; 'ctx' (if not NULL) is passed to fn instead of the
+ * key copy and must stay valid until gfx_hud_commit().  w/h give the
+ * logical size for the bounding box.  On a non-recording RastPort fn
+ * is simply called.
  */
+typedef void (*gfx_draw_fn)(struct RastPort *rp, const void *ctx, WORD x, WORD y, WORD arg);
+void gfx_cached(struct RastPort *rp, gfx_draw_fn fn, const void *key, int keylen,
+                const void *ctx, WORD x, WORD y, WORD arg, WORD w, WORD h);
+
+/* convenience: big block-letter string, see Uranus Lander draw.c */
 typedef void (*gfx_big_fn)(struct RastPort *rp, const char *str, WORD x, WORD y, WORD scale);
 void gfx_big(struct RastPort *rp, const char *str, WORD x, WORD y, WORD scale,
              WORD width, gfx_big_fn draw);
+
+/* 16 pixel wide single colour sprite: rows[] are bit masks (MSB =
+ * left pixel), h logical rows starting at logical x, y.  Fast path
+ * for invaders, frogs, cars...  Clipped; marks the dirty area.
+ */
+void gfx_mask16(struct RastPort *rp, WORD x, WORD y, const UWORD *rows, int h, int col);
+
+/* clear a RastPort's whole buffer to colour 0 (scenery layer use) */
+void gfx_clear(struct RastPort *rp);
 
 /* Draw n single pixel "stars" into the back buffer: 'pts' points to
  * x, y, colour WORDs, 'stride' WORDs apart.  Points at or below

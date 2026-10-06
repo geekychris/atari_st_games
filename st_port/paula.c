@@ -17,6 +17,8 @@ struct voice {
 	ULONG pos;			/* 16.16 */
 	int on;
 	int silent;			/* short all-zero block (one-shot end) */
+	UWORD per;			/* period the step below is for */
+	ULONG inc;			/* 16.16 step per output frame */
 };
 
 static struct voice v[4];
@@ -28,7 +30,8 @@ static ULONG ahead;			/* mix this far ahead of playback */
 static ULONG step_k;			/* (PAULA_HZ << 16) / rate */
 static int want_rate, rate, falcon;
 static void (*tick_fn)(void);
-static long tick_num, tick_den, vbl_hz, tick_acc;
+static short tick_num, tick_den, vbl_hz;
+static long tick_acc;
 static volatile int running;
 
 UWORD paula_lock(void)
@@ -136,6 +139,22 @@ __asm__(
 	"	rts\n"
 );
 
+/* frames (at most n) until 'dist' (16.16) is covered at 'inc' per frame,
+ * rounded up.  Usually the whole run fits and no division is needed;
+ * otherwise a 32/16 divu does it (both scaled by 1/256). */
+static int frames_until(ULONG dist, ULONG inc, int n)
+{
+	UWORD i8 = (UWORD)(inc >> 8) + 1;
+	ULONG d8 = dist >> 8;
+	if (d8 >= (ULONG)(UWORD)n * i8)
+		return n;
+	/* d8 < n * i8 <= 2048 * 65536: quotient fits 16 bits */
+	UWORD q;
+	__asm__ ("divu.w %2,%0" : "=d"(q) : "0"(d8), "dm"(i8));
+	q = (UWORD)(q + 1);
+	return q < n ? q : n;
+}
+
 /* channel ch into one side of the ring, n frames.
  * add = 0: store (silence where the channel is quiet), 1: add */
 static void mix_voice(int ch, signed char *dst, int n, int add)
@@ -145,7 +164,13 @@ static void mix_voice(int ch, signed char *dst, int n, int add)
 	int vol = custom.aud[ch].ac_vol;
 	if (vol > 64)
 		vol = 64;
-	ULONG inc = per >= 64 ? step_k / per : 0;
+	ULONG inc;
+	if (per != c->per)
+	{
+		c->per = per;
+		c->inc = per >= 64 ? step_k / per : 0;
+	}
+	inc = c->inc;
 	if (c->on && c->silent
 	    && (const signed char *)custom.aud[ch].ac_ptr != c->ptr)
 		latch(ch);	/* registers changed while looping silence */
@@ -159,16 +184,15 @@ static void mix_voice(int ch, signed char *dst, int n, int add)
 			return;
 		}
 		ULONG end = c->len << 16;
-		ULONG left = (end - c->pos + inc - 1) / inc;	/* frames to block end */
-		int k = left < (ULONG)n ? (int)left : n;
 		/* the inner loop indexes with a 16 bit register: run from a
 		 * base at most 16 KB behind the position and stop before the
 		 * index would pass 32 KB (MOD samples can be 128 KB) */
 		ULONG base = (c->pos >> 16) & ~0x3fffUL;
 		ULONG lpos = c->pos - (base << 16);
-		ULONG room = ((0x7fffUL << 16) - lpos) / inc;
-		if ((ULONG)k > room)
-			k = (int)room;
+		ULONG lend = end - (base << 16);
+		if (lend > (0x7fffUL << 16))
+			lend = 0x7fffUL << 16;
+		int k = frames_until(lend - lpos, inc, n);
 		if (vol || !add)
 			lpos = paula_run(dst, k, c->ptr + base, lpos, inc, voltab[vol], add);
 		else
@@ -241,10 +265,11 @@ void paula_vbl(void)
 		return;
 	if (tick_fn)
 	{
+		long th = vbl_hz * tick_den;	/* (vbl_hz, tick_den small) */
 		tick_acc += tick_num;
-		while (tick_acc >= vbl_hz * tick_den)
+		while (tick_acc >= th)
 		{
-			tick_acc -= vbl_hz * tick_den;
+			tick_acc -= th;
 			tick_fn();
 		}
 	}

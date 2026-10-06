@@ -87,9 +87,31 @@ void gfx_or16_row(struct RastPort *rp, const WORD *xs, int n, WORD y,
  * dirty rectangles.  Cheaper than many small dirty rectangles.
  */
 void gfx_copy_band(WORD y0, WORD y1);
+
+/* Heightmap band (terrain): column x0+i gets top_col at logical row
+ * y[i] and body_col below it for body_h rows.  Much cheaper than a
+ * RectFill per height change. */
+void gfx_column_band(struct RastPort *rp, const WORD *y, int n, int x0,
+		     int top_col, int body_col, int body_h);
+
+/* Same for a scrolling world heightmap of n columns (wrapping): the
+ * physical rows are prepared once (redo when the terrain changes), each
+ * frame draws the 320 columns from world column 'start' (~5x faster). */
+typedef struct gfx_heightmap gfx_heightmap;
+gfx_heightmap *gfx_heightmap_prepare(const WORD *y, int n, int body_h);
+void gfx_heightmap_free(gfx_heightmap *h);
+void gfx_heightmap_draw(struct RastPort *rp, const gfx_heightmap *h, int start,
+			int top_col, int body_col);
+/* same, for rows just cleared to colour 0 (gfx_fill_rows) with nothing
+ * else drawn in them yet: plain writes, no read-modify-write */
+void gfx_heightmap_draw_fresh(struct RastPort *rp, const gfx_heightmap *h, int start,
+			      int top_col, int body_col);
+/* physical rows the terrain from 'start' covers (e.g. to clear them) */
+void gfx_heightmap_rows(const gfx_heightmap *h, int start, int *y0, int *y1);
 /* fill rows y0..y1 of the back buffer with a solid colour (movem
  * stores: about twice as fast as copying from the background) */
 void gfx_fill_band(WORD y0, WORD y1, int col);
+void gfx_fill_rows(int py0, int py1, int col);	/* same, physical rows */
 struct RastPort *gfx_back_nomark(void);
 
 /* Pre-shifted masked sprites (the classic ST technique): 'fn' draws the

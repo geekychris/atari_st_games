@@ -356,7 +356,7 @@ static void output(void)
 		if (!music_owns(c))
 			continue;
 		custom.aud[c].ac_per = (UWORD)clamp_period(ch[c].out_period ? ch[c].out_period : 428);
-		custom.aud[c].ac_vol = (UWORD)(ch[c].out_vol * master >> 6);
+		custom.aud[c].ac_vol = (UWORD)((WORD)ch[c].out_vol * (WORD)master >> 6);
 	}
 }
 

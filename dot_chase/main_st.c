@@ -2,11 +2,12 @@
  * DOT CHASE - Atari STE port.
  *
  * Port of the Amiga version (main.c in geekychris/amiga_games, kept as
- * main.c.amiga): game.c, draw.c and sound.c are unmodified and run on
- * the shared ST layer in ../st_port.  draw.c already draws the maze once
- * per buffer and then only restores the tiles under the moving sprites,
- * so it draws straight into the back buffer.  sound.c pokes Paula; it is
- * built as C++ against the Paula emulation (STE DMA sound).
+ * main.c.amiga): game.c is unmodified and runs on the shared ST layer
+ * in ../st_port.  draw.c draws the maze once per buffer and then only
+ * restores the tiles under the moving sprites, so it draws straight into
+ * the back buffer; its ST port blocks restore those tiles from a copy of
+ * the maze and cache strings.  sound.c pokes Paula; it is built as C++
+ * against the Paula emulation (STE DMA sound).
  *
  * The main loop is main.c's, with game_update and the sound handling
  * run once per 50 Hz VBL (as on the Amiga) and drawing once per frame.

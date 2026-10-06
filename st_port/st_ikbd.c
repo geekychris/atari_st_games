@@ -7,7 +7,8 @@
 #define ACIA_VEC  ((void * volatile *)0x118)
 
 volatile UBYTE ikbd_keys[128];
-static volatile UBYTE joy1, mouse_buttons;
+static volatile UBYTE key_hits[128];
+static volatile UBYTE joy1, joy1_hits, mouse_buttons;
 static volatile WORD mouse_dx, mouse_dy;
 static void *old_vec;
 
@@ -23,10 +24,12 @@ void ikbd_byte(UBYTE b)
 		pkt[pkt_pos++] = b;
 		if (--pkt_left)
 			return;
-		if (pkt_header == 0xff)
-			joy1 = pkt[0];
-		else if (pkt_header == 0xfd)
-			joy1 = pkt[1];
+		if (pkt_header == 0xff || pkt_header == 0xfd)
+		{
+			UBYTE j = pkt_header == 0xff ? pkt[0] : pkt[1];
+			joy1_hits |= j & ~joy1;
+			joy1 = j;
+		}
 		else if (pkt_header >= 0xf8 && pkt_header <= 0xfb)
 		{
 			mouse_buttons = ((pkt_header & 2) ? 1 : 0) | ((pkt_header & 1) ? 2 : 0);
@@ -44,6 +47,8 @@ void ikbd_byte(UBYTE b)
 		return;
 	}
 	ikbd_keys[b & 0x7f] = !(b & 0x80);
+	if (!(b & 0x80))
+		key_hits[b] = 1;
 }
 
 /* keyboard ACIA interrupt (drains MIDI ACIA too, software EOI) */
@@ -79,8 +84,8 @@ static void ikbd_send(UBYTE cmd)
 void ikbd_init(int mode)
 {
 	for (int i = 0; i < 128; i++)
-		ikbd_keys[i] = 0;
-	joy1 = mouse_buttons = 0;
+		ikbd_keys[i] = key_hits[i] = 0;
+	joy1 = joy1_hits = mouse_buttons = 0;
 	mouse_dx = mouse_dy = 0;
 	pkt_left = 0;
 	old_vec = *ACIA_VEC;
@@ -108,6 +113,20 @@ UBYTE ikbd_joy1(void)
 {
 	/* fire as right mouse button when the mouse is on, see header */
 	return joy1 | ((mouse_buttons & 2) ? 0x80 : 0);
+}
+
+int ikbd_key_hit(int sc)
+{
+	int hit = key_hits[sc & 0x7f];
+	key_hits[sc & 0x7f] = 0;
+	return hit;
+}
+
+UBYTE ikbd_joy1_hits(void)
+{
+	UBYTE h = joy1_hits;
+	joy1_hits &= ~h;
+	return h;
 }
 
 UBYTE ikbd_mouse_buttons(void)

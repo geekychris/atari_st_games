@@ -503,6 +503,65 @@ struct RastPort *gfx_bg(void) { return &rp_scenery; }
 struct RastPort *gfx_back(void) { return &rp_screen[back]; }
 struct RastPort *gfx_hud(void) { return &rp_hud; }
 
+static struct RastPort rp_nomark;
+
+struct RastPort *gfx_back_nomark(void)
+{
+	rp_nomark = rp_screen[back];
+	rp_nomark.dirty = NULL;
+	return &rp_nomark;
+}
+
+/* fill 'blocks' x 32 bytes downwards from 'end' with the plane
+ * pattern a, b (planes 0/1, 2/3) using movem: ~2 cycles per byte */
+void fill_movem(void *end, long blocks, ULONG a, ULONG b);
+__asm__(
+	"	.text\n"
+	"	.globl	fill_movem\n"
+	"fill_movem:\n"
+	"	movem.l	%d2-%d4/%a2-%a5,-(%sp)\n"	/* 7 regs = 28 bytes */
+	"	move.l	32(%sp),%a0\n"
+	"	move.l	36(%sp),%d4\n"
+	"	move.l	40(%sp),%d0\n"
+	"	move.l	44(%sp),%d1\n"
+	"	move.l	%d0,%d2\n"
+	"	move.l	%d1,%d3\n"
+	"	move.l	%d0,%a2\n"
+	"	move.l	%d1,%a3\n"
+	"	move.l	%d0,%a4\n"
+	"	move.l	%d1,%a5\n"
+	"	subq.l	#1,%d4\n"
+	"1:	movem.l	%d0-%d3/%a2-%a5,-(%a0)\n"	/* memory: a,b,a,b,... */
+	"	dbra	%d4,1b\n"
+	"	movem.l	(%sp)+,%d2-%d4/%a2-%a5\n"
+	"	rts\n"
+);
+
+void gfx_fill_band(WORD y0, WORD y1, int col)
+{
+	int py0 = map_y(y0), py1 = map_y(y1);
+	if (py0 < 0) py0 = 0;
+	if (py1 >= SCR_H) py1 = SCR_H - 1;
+	if (py0 > py1)
+		return;
+	const UWORD *c = cmask[col & 15];
+	ULONG a = (ULONG)c[0] << 16 | c[1], b = (ULONG)c[2] << 16 | c[3];
+	UBYTE *end = (UBYTE *)(screen[back] + row_off[py1] + LINE_W);
+	long n = (py1 - py0 + 1) * (LINE_W * 2);	/* bytes, multiple of 160 */
+	/* 160 bytes per line = 5 x 32 byte movem blocks */
+	fill_movem(end, n / 32, a, b);
+}
+
+void gfx_copy_band(WORD y0, WORD y1)
+{
+	int py0 = map_y(y0), py1 = map_y(y1);
+	if (py0 < 0) py0 = 0;
+	if (py1 >= SCR_H) py1 = SCR_H - 1;
+	if (py0 <= py1)
+		memcpy(screen[back] + row_off[py0], bgscreen + row_off[py0],
+		       (py1 - py0 + 1) * LINE_W * 2);
+}
+
 void gfx_bg_clear(void)
 {
 	memset(scenery, 0, SCR_BYTES);
@@ -1065,4 +1124,140 @@ void gfx_stars(struct RastPort *rp, const WORD *pts, int n, int stride, const WO
 		offs[cnt++] = off;
 	}
 	star_n[b] = cnt;
+}
+
+/* ------------------------------------------------------------------ */
+/* pre-shifted sprites */
+
+struct gfx_sprite {
+	WORD py0, rows, groups;		/* physical first row, rows, groups incl. shift */
+	UWORD *data[16];		/* per shift: rows x groups x (mask, p0..p3) */
+};
+
+static UWORD *scratch;
+
+gfx_sprite *gfx_sprite_build(gfx_draw_fn fn, const void *ctx, WORD arg, WORD y, WORD w, WORD h)
+{
+	return gfx_sprite_build_on(fn, ctx, arg, y, w, h, -1);
+}
+
+gfx_sprite *gfx_sprite_build_on(gfx_draw_fn fn, const void *ctx, WORD arg, WORD y, WORD w, WORD h, int bg)
+{
+	struct RastPort rp;
+	gfx_sprite *spr;
+	int py0 = map_y(y), py1 = map_y(y + h - 1), ng = (w + 15) / 16;
+	UWORD *img;
+
+	if (py0 < 0) py0 = 0;
+	if (py1 >= SCR_H) py1 = SCR_H - 1;
+	if (py1 < py0 || ng > 7)
+		return NULL;
+	if (!scratch && !(scratch = (UWORD *)Malloc(SCR_BYTES)))
+		return NULL;
+	spr = (gfx_sprite *)Malloc(sizeof(*spr));
+	if (!spr)
+		return NULL;
+	spr->py0 = py0;
+	spr->rows = py1 - py0 + 1;
+	spr->groups = ng + 1;
+
+	/* render over colour 0 and over colour 15: a pixel belongs to the
+	 * sprite where either rendering differs from its background */
+	img = (UWORD *)Malloc((long)spr->rows * ng * 5 * 2);
+	if (!img)
+		return NULL;
+	memset(&rp, 0, sizeof(rp));
+	rp.base = scratch;
+	for (int pass = 0; pass < (bg >= 0 ? 1 : 2); pass++)
+	{
+		for (int r = 0; r < spr->rows; r++)
+			for (int g = 0; g < ng * 4; g++)
+				scratch[row_off[py0 + r] + g] =
+					bg >= 0 ? cmask[bg & 15][g & 3] : pass ? 0xffff : 0;
+		fn(&rp, ctx, 0, y, arg);
+		for (int r = 0; r < spr->rows; r++)
+			for (int g = 0; g < ng; g++)
+			{
+				const UWORD *q = scratch + row_off[py0 + r] + g * 4;
+				UWORD *o = img + (r * ng + g) * 5;
+				if (bg >= 0)
+				{
+					o[0] = 0xffff;		/* composited: opaque */
+					o[1] = q[0]; o[2] = q[1]; o[3] = q[2]; o[4] = q[3];
+				}
+				else if (!pass)
+				{
+					o[0] = q[0] | q[1] | q[2] | q[3];	/* drawn non-zero */
+					o[1] = q[0]; o[2] = q[1]; o[3] = q[2]; o[4] = q[3];
+				}
+				else
+					o[0] |= ~(q[0] & q[1] & q[2] & q[3]);	/* drawn non-15 */
+			}
+	}
+	/* 16 pre-shifted copies with one extra group */
+	for (int sh = 0; sh < 16; sh++)
+	{
+		UWORD *d = (UWORD *)Malloc((long)spr->rows * spr->groups * 5 * 2);
+		if (!d)
+			return NULL;
+		spr->data[sh] = d;
+		for (int r = 0; r < spr->rows; r++)
+			for (int g = 0; g < spr->groups; g++)
+				for (int k = 0; k < 5; k++)
+				{
+					/* outside the image: transparent, or the
+					 * composite colour (opaque) */
+					UWORD out = bg < 0 ? 0 : k == 0 ? 0xffff : cmask[bg & 15][k - 1];
+					UWORD cur = g < ng ? img[(r * ng + g) * 5 + k] : out;
+					UWORD prev = g > 0 ? img[(r * ng + g - 1) * 5 + k] : out;
+					/* data words are only valid under the mask */
+					d[(r * spr->groups + g) * 5 + k] =
+						sh ? (UWORD)((cur >> sh) | (prev << (16 - sh))) : cur;
+				}
+	}
+	Mfree(img);
+	return spr;
+}
+
+void gfx_sprite_draw(struct RastPort *rp, const gfx_sprite *spr, WORD x)
+{
+	int g0 = x >> 4, ng = spr->groups;
+	const UWORD *d;
+	int gskip = 0, gcount = ng;
+
+	if (!spr || x <= -16 * ng || x >= SCR_W)
+		return;
+	d = spr->data[x & 15];
+	if (g0 < 0)
+	{
+		gskip = -g0;
+		gcount -= gskip;
+		g0 = 0;
+	}
+	if (g0 + gcount > SCR_W / 16)
+		gcount = SCR_W / 16 - g0;
+	for (int r = 0; r < spr->rows; r++)
+	{
+		UWORD *q = rp->base + row_off[spr->py0 + r] + (g0 << 2);
+		const UWORD *s = d + (r * ng + gskip) * 5;
+		for (int g = 0; g < gcount; g++, q += 4, s += 5)
+		{
+			UWORD m = s[0];
+			if (!m)
+				continue;
+			if (m == 0xffff)
+			{
+				/* fully opaque group: plain copy of the 4 plane words */
+				q[0] = s[1]; q[1] = s[2]; q[2] = s[3]; q[3] = s[4];
+				continue;
+			}
+			UWORD k = ~m;
+			q[0] = (q[0] & k) | (s[1] & m);
+			q[1] = (q[1] & k) | (s[2] & m);
+			q[2] = (q[2] & k) | (s[3] & m);
+			q[3] = (q[3] & k) | (s[4] & m);
+		}
+	}
+	if (rp->dirty)
+		mark(rp, g0 << 4, spr->py0, ((g0 + gcount) << 4) - 1, spr->py0 + spr->rows - 1);
 }

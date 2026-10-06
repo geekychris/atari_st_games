@@ -12,6 +12,8 @@ typedef signed char     BYTE;
 typedef unsigned char   UBYTE;
 typedef short           BOOL;
 typedef void           *APTR;
+typedef char           *STRPTR;
+typedef const char     *CONST_STRPTR;
 
 #ifndef TRUE
 #define TRUE  1

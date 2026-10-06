@@ -228,6 +228,18 @@ static void mix_voice(int ch, signed char *dst, int n, int add)
 	if (c->on && c->silent
 	    && (const signed char *)custom.aud[ch].ac_ptr != c->ptr)
 		latch(ch);	/* registers changed while looping silence */
+	/* muted (volume 0) block looping on itself (players silence channels
+	 * this way): just advance the position */
+	if (c->on && !vol && add && inc && c->len &&
+	    (const signed char *)custom.aud[ch].ac_ptr == c->ptr &&
+	    (ULONG)custom.aud[ch].ac_len * 2 == c->len)
+	{
+		ULONG end = c->len << 16;
+		c->pos += inc * (ULONG)n;
+		while (c->pos >= end)
+			c->pos -= end;
+		return;
+	}
 	/* a short block looping on itself: wrap inside the asm loop */
 	if (c->on && !c->silent && inc && c->len <= 0x4000 && (inc >> 16) < c->len && (vol || !add) &&
 	    (const signed char *)custom.aud[ch].ac_ptr == c->ptr &&
@@ -269,7 +281,8 @@ static void mix_voice(int ch, signed char *dst, int n, int add)
 
 static int audible(int ch)
 {
-	return v[ch].on && !v[ch].silent && custom.aud[ch].ac_per >= 64;
+	return v[ch].on && !v[ch].silent && custom.aud[ch].ac_per >= 64 &&
+	       custom.aud[ch].ac_vol > 0;
 }
 
 /* one side: the first audible channel is stored, the second added; a

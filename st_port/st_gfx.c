@@ -1015,6 +1015,122 @@ void gfx_fill_rows(int py0, int py1, int col)
 		   (ULONG)c[0] << 16 | c[1], (ULONG)c[2] << 16 | c[3]);
 }
 
+/*
+ * Vertical spans: column x0+i is filled from logical row y0[i] to y1[i]
+ * (nothing if y1 < y0) with colour col.  16 columns at a time: each
+ * column toggles its bit at its first and one-past-last row in two
+ * difference arrays, a running XOR down the rows gives each row's mask,
+ * and each row is written once per plane.  A column costs the same
+ * however tall its span is (mountain silhouettes, terrain bodies).
+ */
+/* Per-column part of gfx_vspans in assembly: for n columns, map
+ * y0/y1 to screen rows through ymap, toggle the column's bit at the
+ * first row and one past the last in dmask (indexed from row -128), and
+ * track the row range in mm[0] (min) / mm[1] (max). */
+void vs_columns(const WORD *y0, const WORD *y1, int n, UWORD bit, UWORD *dmask,
+		const WORD *ymap0, WORD *mm);
+__asm__(
+	"	.text\n"
+	"	.globl	vs_columns\n"
+	"vs_columns:\n"
+	"	movem.l	%d2-%d5/%a2-%a4,-(%sp)\n"
+	"	movem.l	32(%sp),%a0-%a1\n"		/* y0, y1 */
+	"	move.l	40(%sp),%d2\n"			/* n */
+	"	move.l	44(%sp),%d3\n"			/* bit */
+	"	movem.l	48(%sp),%a2-%a4\n"		/* dmask, ymap0, mm */
+	"	move.w	(%a4),%d4\n"			/* min */
+	"	move.w	2(%a4),%d5\n"			/* max */
+	"	subq.w	#1,%d2\n"
+	"	bmi.s	9f\n"
+	"1:	move.w	(%a0)+,%d0\n"
+	"	move.w	(%a1)+,%d1\n"
+	"	cmp.w	%d0,%d1\n"
+	"	blt.s	5f\n"			/* empty */
+	"	add.w	%d0,%d0\n"
+	"	move.w	(%a3,%d0.w),%d0\n"	/* screen row of y0 */
+	"	add.w	%d1,%d1\n"
+	"	move.w	(%a3,%d1.w),%d1\n"	/* screen row of y1 */
+	"	cmp.w	%d4,%d0\n"
+	"	bge.s	2f\n"
+	"	move.w	%d0,%d4\n"
+	"2:	cmp.w	%d5,%d1\n"
+	"	ble.s	3f\n"
+	"	move.w	%d1,%d5\n"
+	"3:	add.w	%d0,%d0\n"
+	"	eor.w	%d3,(%a2,%d0.w)\n"
+	"	add.w	%d1,%d1\n"
+	"	eor.w	%d3,2(%a2,%d1.w)\n"
+	"5:	lsr.w	#1,%d3\n"
+	"	dbra	%d2,1b\n"
+	"	move.w	%d4,(%a4)\n"
+	"	move.w	%d5,2(%a4)\n"
+	"9:	movem.l	(%sp)+,%d2-%d5/%a2-%a4\n"
+	"	rts\n"
+);
+
+/* rows -128 .. 383 map to screen rows -100 .. 299 */
+#define DM_OFF 100
+static UWORD vs_dmask[DM_OFF + 300 + 2];
+
+void gfx_vspans(struct RastPort *rp, int x0, int n, const WORD *y0, const WORD *y1, int col)
+{
+	const UWORD *c = cmask[col & 15];
+	UWORD c0 = c[0], c1 = c[1], c2 = c[2], c3 = c[3];
+	UWORD *dm = vs_dmask + DM_OFF;		/* index = screen row */
+	short i = 0, x = x0;
+
+	while (i < n)
+	{
+		short g = x >> 4, s0 = x & 15, cnt = 16 - s0;
+		WORD mm[2] = { 32767, -32768 };
+		if (cnt > n - i)
+			cnt = n - i;
+		if (g < 0 || g >= SCR_W / 16)
+		{
+			x += cnt;
+			i += cnt;
+			continue;
+		}
+		/* y values must be inside the mapping table (-128 .. 383) */
+		vs_columns(y0 + i, y1 + i, cnt, 0x8000 >> s0, dm, ymap - YMAP_MIN, mm);
+		if (mm[1] >= mm[0])
+		{
+			short rmin = mm[0], rmax = mm[1], r = rmin;
+			UWORD m = 0;
+			/* rows above the screen only feed the running mask */
+			for (; r < 0 && r <= rmax; r++)
+				m ^= dm[r];
+			short last = rmax < SCR_H ? rmax : SCR_H - 1;
+			UWORD *p = rp->base + row_off[r < SCR_H ? r : SCR_H - 1] + (g << 2);
+			for (; r <= last; r++, p += LINE_W)
+			{
+				m ^= dm[r];
+				if (!m)
+					continue;
+				if (m == 0xffff)
+				{
+					/* fully covered row: plain stores */
+					p[0] = c0; p[1] = c1; p[2] = c2; p[3] = c3;
+					continue;
+				}
+				/* per plane a single OR or AND */
+				UWORD km = ~m;
+				if (c0) p[0] |= m; else p[0] &= km;
+				if (c1) p[1] |= m; else p[1] &= km;
+				if (c2) p[2] |= m; else p[2] &= km;
+				if (c3) p[3] |= m; else p[3] &= km;
+			}
+			/* keep the difference array zero between groups */
+			for (r = rmin; r <= rmax + 1; r++)
+				dm[r] = 0;
+			if (rp->dirty && last >= (rmin < 0 ? 0 : rmin))
+				mark(rp, g << 4, rmin < 0 ? 0 : rmin, (g << 4) + 15, last);
+		}
+		x += cnt;
+		i += cnt;
+	}
+}
+
 void gfx_copy_band(WORD y0, WORD y1)
 {
 	int py0 = map_y(y0), py1 = map_y(y1);

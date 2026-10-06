@@ -88,6 +88,10 @@ void gfx_or16_row(struct RastPort *rp, const WORD *xs, int n, WORD y,
  */
 void gfx_copy_band(WORD y0, WORD y1);
 
+/* Column x0+i filled from logical row y0[i] to y1[i] (skip if y1 < y0)
+ * with colour col, 16 columns at a time: silhouettes, terrain bodies */
+void gfx_vspans(struct RastPort *rp, int x0, int n, const WORD *y0, const WORD *y1, int col);
+
 /* Heightmap band (terrain): column x0+i gets top_col at logical row
  * y[i] and body_col below it for body_h rows.  Much cheaper than a
  * RectFill per height change. */

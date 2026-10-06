@@ -5,7 +5,7 @@ Shared code for porting Amiga games from
 
 The ports that use it:
 - [uranus_lander](../uranus_lander), [nova_defense](../nova_defense) and [frank_the_frog](../frank_the_frog) run on a plain ST.
-- [rock_blaster](../rock_blaster), [orbital_patrol](../orbital_patrol) and [jump_quest](../jump_quest) need an STE for DMA sound.
+- [rock_blaster](../rock_blaster), [orbital_patrol](../orbital_patrol), [jump_quest](../jump_quest), [stakattack](../stakattack), [dot_chase](../dot_chase), [lunar_rider](../lunar_rider) and [pea_shooter_blast](../pea_shooter_blast) need an STE for DMA sound. The last two also use its blitter.
 - The Falcon layer in [../falcon_port](../falcon_port) reuses the IKBD, NatFeats and Paula code.
 
 A port's Makefile sets `NAME`, `SRCS`, optionally `ST_EXTRA`, `MACHINE` and `EXTRA_CFLAGS`, then includes `port.mk`.
@@ -20,6 +20,7 @@ A port's Makefile sets `NAME`, `SRCS`, optionally `ST_EXTRA`, `MACHINE` and `EXT
 | `paula.c/.h` (`ST_EXTRA=paula`) | Amiga Paula on STE/TT/Falcon DMA sound. `custom` has the real register offsets, so code poking `custom.aud[]` or computing addresses from the custom base works. `custom.dmacon = x` works unchanged from C++. Four channels are mixed Amiga-style into an 8-bit stereo ring from the VBL: 6258 or 12517 Hz on the STE, 9834 Hz on the Falcon. |
 | `ptplayer.c/.h` (`ST_EXTRA=ptplayer`) | ProTracker MOD player and `mt_playfx` sound effects, with the C API of Frank Wille's ptplayer, which the Amiga games call from assembly. |
 | `amiga_dos.c` (`ST_EXTRA=amiga_dos`) | AmigaDOS `Open`/`Read`/`Write`/`Seek`/`Close`/`Delay` on GEMDOS. Volume prefixes are dropped and names shortened to 8.3. |
+| `st_blit.c/.h` (`ST_EXTRA=st_blit`) | STE blitter copies between 4-plane bitmaps of any width, at any pixel offset (`BLIT_COPY` or `BLIT_OR`). For scrolling layers: pre-render a wide strip once, then blit the visible window each frame. `blit_available()` checks for an STE / Mega STE. |
 | `ab_log.c` (`ST_EXTRA=ab_log`) | The amiga_games bridge's `AB_I`/`AB_W`/`AB_E` logging, sent to the host through NatFeats. |
 | `natfeats.c/.h` | Hatari NatFeats (`nf_print` → agent API `/console`). |
 | `compat/` | Amiga header shims: exec, graphics, intuition, dos, hardware, bridge_client. |
@@ -40,7 +41,9 @@ Helpers for faster drawing:
 | `gfx_heightmap_*` / `gfx_column_band` | Scrolling terrain. |
 | `gfx_fill_band` / `gfx_fill_rows` / `gfx_copy_band` | movem fills and row copies. |
 | `gfx_bg_commit_rows` / `gfx_bg_dirty_rows` | Scenery that changes in parts. |
-| (built in) | A text glyph cache for strings redrawn every frame. |
+| `gfx_bg_copy_rect` | Copy a rectangle of the scenery into the back buffer (restoring under sprites). |
+| `gfx_vspans` | A run of vertical spans (silhouettes, terrain), filled 16 columns at a time from a difference mask. |
+| (built in) | A text glyph cache for strings redrawn every frame; single-group `RectFill`s take a fast path. |
 
 ## Notes
 

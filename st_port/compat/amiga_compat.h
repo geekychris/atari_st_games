@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /*
  * Amiga exec/dos declarations for the ST ports: memory allocation on
  * malloc, AmigaDOS files on GEMDOS (amiga_dos.c), opaque Intuition types.

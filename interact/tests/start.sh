@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Chris Collins <chris@hitorro.com>
 # Start Hatari (ST, EmuTOS) with the agent API, mount build/ as C: and
 # autostart INTERACT.PRG.  Returns once the app reported READY.
 #   start.sh [--restart] [extra hatari options]

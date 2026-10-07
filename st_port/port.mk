@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Chris Collins <chris@hitorro.com>
 # Shared build rules for the Amiga -> Atari ST game ports.
 # A port's Makefile sets NAME (8.3 program name without .PRG), SRCS,
 # optionally TOS / MACHINE / EXTRA_CFLAGS, then includes this file.
@@ -29,7 +31,10 @@ PRG      = $(OUT)/$(NAME).PRG
 ST_SRCS  = $(PORT)st_gfx.c $(PORT)st_ikbd.c $(PORT)st_ym.c $(PORT)natfeats.c \
            $(patsubst %,$(PORT)%.c,$(ST_EXTRA))
 HDRS     = $(wildcard *.h) $(wildcard $(PORT)*.h) $(wildcard $(PORT)compat/*.h)
-TOP     := $(abspath $(PORT)../..)
+# Hatari (with the agent tools and EmuTOS images) lives in a separate
+# checkout of geekychris/hatari_augmented; default: next to this repo.
+HATARI_DIR ?= $(abspath $(PORT../../hatari_augmented))
+TOP     := $(HATARI_DIR)
 MACHINE ?= st
 # the 192k EmuTOS reports TOS 1.04, which Hatari only runs as a plain ST
 ifeq ($(MACHINE),st)

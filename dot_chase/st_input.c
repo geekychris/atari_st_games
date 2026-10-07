@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /*
  * Dot Chase - Atari ST input (replaces the Amiga input.c): the same keys
  * (cursor keys / WASD, Space / Return / F1 start, Esc) and joystick 1,

@@ -18,7 +18,7 @@ Captured through the agent API (`/screen`, 2x) while `autopilot.py` played.
 ## Build and run
 
 ```sh
-../../tools/agent/fetch-cross-mint.sh      # once
+$HATARI_DIR/tools/agent/fetch-cross-mint.sh      # once
 make CROSS=~/computers/atari-cc/opt/cross-mint/bin/m68k-atari-mintelf-
 make run CROSS=...                         # ST, PAL EmuTOS, build/ as C:, autostart
 python3 autopilot.py --levels 3            # let the autopilot play it

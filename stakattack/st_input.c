@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /*
  * StakAttack - Atari ST input (replaces the Amiga input.c): the same key
  * map (cursor keys / WASD, Space, Alt / Return start, P pause, Esc) and

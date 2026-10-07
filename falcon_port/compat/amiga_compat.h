@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /*
  * Amiga header shim for the Falcon ports: the few exec / intuition /
  * graphics declarations Amiga game code refers to, mapped to the

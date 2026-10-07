@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /*
  * Lunar Rider - Atari ST input (replaces the Amiga input.c): the same
  * keys (cursor left/right / D speed, up / W / Space jump, A fire, Esc)

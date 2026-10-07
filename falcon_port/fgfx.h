@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /*
  * Atari Falcon030 graphics layer for Amiga game ports (AGA 8-bit games).
  *

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /*
  * Orbital Patrol - Atari ST input (replaces the Amiga input.c, which
  * installs an input.device handler): the same key map and edge-triggered

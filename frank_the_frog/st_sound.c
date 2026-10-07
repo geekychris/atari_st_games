@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /*
  * Frank the Frog - Atari ST sound effects (replaces the Amiga sound.c,
  * which builds Paula samples): synthesised on YM channel C through the

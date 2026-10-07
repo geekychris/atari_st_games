@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Chris Collins <chris@hitorro.com>
 # Joystick port 1: hold directions for N frames, press fire.
 . "$(dirname "$0")/lib.sh"
 require_app

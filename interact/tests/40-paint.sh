@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Chris Collins <chris@hitorro.com>
 # Mouse drag painting: hold the button, move to absolute positions, release.
 . "$(dirname "$0")/lib.sh"
 require_app

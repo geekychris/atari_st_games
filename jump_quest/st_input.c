@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /*
  * Jump Quest - Atari ST input (replaces the Amiga input.c): the same
  * keys (cursor keys / WASD, Space / Alt / Z / X jump, Return start, Esc)

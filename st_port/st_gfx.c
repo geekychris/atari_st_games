@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /*
  * Atari ST graphics layer for the Uranus Lander port, see st_gfx.h.
  * Expects to run in supervisor mode (game calls Super() at start).

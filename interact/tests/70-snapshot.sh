@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Chris Collins <chris@hitorro.com>
 # Snapshots: save state, change things, restore, compare screens.
 . "$(dirname "$0")/lib.sh"
 require_app

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /*
  * AmigaDOS file calls on GEMDOS for the ST ports (see compat/amiga_compat.h).
  * Volume prefixes ("PROGDIR:", "S:", ...) are dropped, so files are

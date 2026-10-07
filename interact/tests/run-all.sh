@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Chris Collins <chris@hitorro.com>
 # Start the app (if needed) and run all feature tests.
 cd "$(dirname "$0")" || exit 1
 # fresh emulator + app for reproducible results

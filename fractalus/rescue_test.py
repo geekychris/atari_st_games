@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Chris Collins <chris@hitorro.com>
 """Fractalus (Falcon port) scenario test through the Hatari agent API.
 
 Starts a mission, then for each kind of pilot (human, jaggi) teleports

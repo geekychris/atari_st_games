@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /*
  * Rock Blaster - Atari ST input (replaces the Amiga input.c): the same
  * key map (cursor keys, A/Z left, D/C right, W thrust, Space/Alt fire,

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /*
  * Nova Defense - Atari ST input (replaces the Amiga input.c):
  * keyboard (cursor keys / A,D, Space / Alt to fire, Esc), mouse

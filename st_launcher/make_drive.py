@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Chris Collins <chris@hitorro.com>
 """Assemble an Atari C: drive with every game port and the ST launcher.
 
     python3 make_drive.py [--out build/drive] [--no-build] [--run [--machine ste]]
@@ -30,9 +32,11 @@ import urllib.parse
 import urllib.request
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-REPO = os.path.abspath(os.path.join(HERE, "..", ".."))
+# Hatari and its tools/games launcher live in a hatari_augmented checkout
+REPO = os.path.abspath(os.environ.get("HATARI_DIR") or os.path.join(HERE, "..", "..", "hatari_augmented"))
 sys.path.insert(0, os.path.join(REPO, "tools", "games"))
-from launcher import Launcher, DEFAULT_INI, RUN_SCRIPT  # noqa: E402
+from launcher import Launcher, RUN_SCRIPT  # noqa: E402
+DEFAULT_INI = os.path.join(HERE, "..", "games.ini")   # this repo's game list
 
 THUMB_W, THUMB_H = 160, 100
 

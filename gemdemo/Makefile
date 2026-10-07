@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+HATARI_DIR ?= $(abspath ../../hatari_augmented)
 # GEM VDI showcase for the Atari ST, built with the m68k-atari-mintelf
 # GCC cross toolchain (https://tho-otto.de/crossmint.php).
 #
@@ -25,7 +28,7 @@ $(OUT):
 
 # Hatari with the agent API: build dir as drive C:, autostart the demo
 run: $(PRG)
-	../../tools/agent/hatari-agent-run.sh --machine st --natfeats on \
+	$(HATARI_DIR)/tools/agent/hatari-agent-run.sh --machine st --natfeats on \
 		--harddrive $(CURDIR)/$(OUT) --auto 'C:\GEMDEMO.PRG'
 
 clean:

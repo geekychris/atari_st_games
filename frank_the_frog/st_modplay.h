@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /* Frank the Frog - ST additions to the music player (st_modplay.c) */
 #ifndef ST_MODPLAY_H
 #define ST_MODPLAY_H

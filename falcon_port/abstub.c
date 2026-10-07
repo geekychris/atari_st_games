@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /* AmigaBridge log stub: AB_I/AB_W/AB_E lines to the host via NatFeats,
  * prefixed "FRACTALUS <level> " (agent API /console). */
 #include <stdarg.h>

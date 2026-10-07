@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /*
  * STE blitter for the ST ports: copies between interleaved 4-plane low
  * resolution bitmaps (16 pixel groups of 4 words, any width), shifted to

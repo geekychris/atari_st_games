@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /* Amiga header shim for the ST ports: DMA control bits (Paula emulation) */
 #include "amiga_compat.h"
 #ifndef DMAF_SETCLR

@@ -34,7 +34,7 @@ curl -s -XPOST localhost:7777/config --data-urlencode "args=--machine ste --mems
 
 ## The drive
 
-`make_drive.py` reads [`examples/games.ini`](../games.ini), the same file the [host launcher](../../tools/games) uses, and writes `build/drive`:
+`make_drive.py` reads [`games.ini`](../games.ini), the same file the [host launcher](https://github.com/geekychris/hatari_augmented/tree/main/tools/games) uses, and writes `build/drive`:
 
 ```
 LAUNCHER.PRG                 the menu (autostarted by --run)

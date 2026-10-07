@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /*
  * Amiga Paula on Atari DMA sound (STE/TT, Falcon030), see paula.h.
  */

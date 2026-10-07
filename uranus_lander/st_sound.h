@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /* Uranus Lander - ST-only sound additions (see st_sound.c) */
 #ifndef ST_SOUND_H
 #define ST_SOUND_H

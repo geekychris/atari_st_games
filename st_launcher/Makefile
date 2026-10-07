@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Chris Collins <chris@hitorro.com>
 # ST game launcher: a menu of the game ports on drive C:
 #   make CROSS=~/computers/atari-cc/opt/cross-mint/bin/m68k-atari-mintelf-
 #   make drive    # build every game and assemble build/drive (C:)

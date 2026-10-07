@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Chris Collins <chris@hitorro.com>
 """Tiny PNG inspector (stdlib only) for screenshot assertions.
 
   pngtool.py size FILE                 -> "W H"

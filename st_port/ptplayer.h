@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /*
  * ProTracker MOD player with the C interface of Frank Wille's ptplayer
  * (which the Amiga games use from assembly), running on the Paula

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /* AmigaBridge client stub for the ST ports: AB_I/AB_W/AB_E log lines go
  * to the emulator host through NatFeats (Hatari --natfeats on), prefixed
  * with the ab_init() name in capitals; the remote variable / hook API is

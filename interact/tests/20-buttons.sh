@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Chris Collins <chris@hitorro.com>
 # Mouse clicks on GEM-drawn buttons, verified via program output and pixels.
 . "$(dirname "$0")/lib.sh"
 require_app

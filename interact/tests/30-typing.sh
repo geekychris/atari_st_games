@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Chris Collins <chris@hitorro.com>
 # Keyboard: typing text, editing with Backspace, submitting with Return.
 . "$(dirname "$0")/lib.sh"
 require_app

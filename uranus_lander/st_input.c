@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /*
  * Uranus Lander - Atari ST input: key/joystick mapping on top of the
  * shared IKBD handler (../st_port/st_ikbd.c).  Same interface as the

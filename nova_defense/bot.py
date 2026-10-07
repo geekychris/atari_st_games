@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Chris Collins <chris@hitorro.com>
 """Nova Defense bot: plays the ST port through the Hatari agent API.
 
 Each tick (frame-synchronised by a breakpoint on the game's gfx_swap):
@@ -14,7 +16,8 @@ import struct
 import sys
 import time
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "tools", "agent"))
+sys.path.insert(0, os.path.join(os.environ.get("HATARI_DIR") or os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "..", "..", "hatari_augmented"), "tools", "agent"))
 from hatari_agent import Hatari, HatariError  # noqa: E402
 
 ROWS, COLS, CELL_W, CELL_H, ALIEN_W = 5, 11, 24, 16, 12  # collision box

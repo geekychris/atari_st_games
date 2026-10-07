@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /*
  * Nova Defense - Atari ST sound on the YM2149 (replaces the Amiga
  * sound.c, which plays Paula waveforms).  Same events and the same

@@ -46,7 +46,7 @@ checks.
 ## Build and run
 
 ```sh
-../../tools/agent/fetch-cross-mint.sh          # once: m68k-atari-mintelf GCC + libs
+$HATARI_DIR/tools/agent/fetch-cross-mint.sh          # once: m68k-atari-mintelf GCC + libs
 make CROSS=~/computers/atari-cc/opt/cross-mint/bin/m68k-atari-mintelf-
 tests/start.sh --restart                       # ST + EmuTOS, build/ as C:, autostart INTERACT
 ```
@@ -74,7 +74,7 @@ the Python stdlib only. Screenshots land in `tests/out/`.
 ```sh
 python3 scenarios.py                 # text menu
 python3 scenarios.py smiley house    # run scenarios directly
-python3 ../../tools/agent/hatari_gui.py
+python3 $HATARI_DIR/tools/agent/hatari_gui.py
 ```
 
 Scenarios: `house`, `smiley` (painting), `buttons`, `greeting` (typing with a

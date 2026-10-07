@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Chris Collins <chris@hitorro.com>
 """Scripted interactions with the INTERACT app through the Hatari agent API.
 
 Run with a text menu:      python3 scenarios.py
@@ -12,7 +14,8 @@ import re
 import sys
 import time
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "tools", "agent"))
+sys.path.insert(0, os.path.join(os.environ.get("HATARI_DIR") or os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "..", "..", "hatari_augmented"), "tools", "agent"))
 from hatari_agent import Hatari, HatariError  # noqa: E402
 
 

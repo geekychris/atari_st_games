@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /* Atari Falcon port: terrain column renderer, see march_falcon.c */
 #ifndef MARCH_FALCON_H
 #define MARCH_FALCON_H

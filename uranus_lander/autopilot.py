@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Chris Collins <chris@hitorro.com>
 """Uranus Lander autopilot: plays the ST port through the Hatari agent API.
 
 A closed control loop running outside the emulator:
@@ -18,7 +20,8 @@ import struct
 import sys
 import time
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "tools", "agent"))
+sys.path.insert(0, os.path.join(os.environ.get("HATARI_DIR") or os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "..", "..", "hatari_augmented"), "tools", "agent"))
 from hatari_agent import Hatari, HatariError  # noqa: E402
 
 FIX = 65536.0

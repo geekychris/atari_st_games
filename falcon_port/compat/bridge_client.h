@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /* AmigaBridge client stub for the Falcon ports: log macros go to the
  * emulator host through NatFeats (Hatari --natfeats on); the remote
  * variable/hook API is replaced by the Hatari agent API (/mem). */

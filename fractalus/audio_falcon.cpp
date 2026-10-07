@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /*
  * Atari Falcon port: the original modplay.c (Paula MOD player and track
  * generator) runs unchanged on the Paula emulation in st_port/paula:

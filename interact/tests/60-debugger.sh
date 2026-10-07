@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Chris Collins <chris@hitorro.com>
 # Debugger: breakpoint on a C function, inspect registers/stack/memory,
 # single-step, continue.  The click that triggers it completes afterwards.
 . "$(dirname "$0")/lib.sh"

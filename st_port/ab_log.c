@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /* AmigaBridge log stub for the ST ports: AB_I/AB_W/AB_E lines to the
  * host via NatFeats as "<NAME> <level> <text>" (agent API /console). */
 #include <stdarg.h>

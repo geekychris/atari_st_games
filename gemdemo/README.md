@@ -30,7 +30,7 @@ GEMDEMO: exit after 1 redraws, 419 animation frames
 ## Build and run
 
 ```sh
-../../tools/agent/fetch-cross-mint.sh          # once: GCC 14 m68k-atari-mintelf + mintlib + gemlib
+$HATARI_DIR/tools/agent/fetch-cross-mint.sh          # once: GCC 14 m68k-atari-mintelf + mintlib + gemlib
 make CROSS=~/computers/atari-cc/opt/cross-mint/bin/m68k-atari-mintelf-
 make run CROSS=...                             # Hatari ST + agent API, build/ as C:, autostart
 ```

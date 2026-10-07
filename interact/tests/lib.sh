@@ -1,9 +1,11 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Chris Collins <chris@hitorro.com>
 # Shared helpers for the INTERACT agent API test scripts.  Source it:
 #   . "$(dirname "$0")/lib.sh"
 
 API=${HATARI_API:-http://127.0.0.1:7777}
 TESTS=$(cd "$(dirname "$0")" && pwd)
-TOP=$(cd "$TESTS/../../.." && pwd)
+TOP=${HATARI_DIR:-$(cd "$TESTS/../../../hatari_augmented" && pwd)}   # hatari_augmented checkout
 OUTDIR=${OUTDIR:-$TESTS/out}
 PNGTOOL="python3 $TESTS/pngtool.py"
 mkdir -p "$OUTDIR"

@@ -32,6 +32,8 @@ extern volatile UBYTE ikbd_keys[128];
 
 /* joystick port 1: ST bits up 1, down 2, left 4, right 8, fire 0x80 */
 UBYTE ikbd_joy1(void);
+/* joystick port 0 (the mouse port; IKBD_JOYSTICK mode only), same bits */
+UBYTE ikbd_joy0(void);
 
 /* Latched presses, for games that act on "pressed" rather than "held":
  * a tap shorter than one game frame is never lost.  Each call returns

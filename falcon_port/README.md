@@ -1,7 +1,7 @@
 # Falcon port layer
 
 Shared code for porting Amiga AGA games to the Atari Falcon030. It is used
-by [../fractalus](../fractalus) and [../void_trader](../void_trader). The ST equivalent is [../st_port](../st_port),
+by [../fractalus](../fractalus), [../void_trader](../void_trader) and [../ace_pilot](../ace_pilot). The ST equivalent is [../st_port](../st_port),
 whose IKBD input, NatFeats and `amiga_types.h` are reused here.
 
 | File | |

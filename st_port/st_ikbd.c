@@ -55,7 +55,8 @@ void ikbd_byte(UBYTE b)
 	ikbd_keys[b & 0x7f] = !(b & 0x80);
 	if (!(b & 0x80))
 	{
-		key_hits[b] = 1;
+		if (key_hits[b] < 255)
+			key_hits[b]++;
 		last_hit = b;
 	}
 }

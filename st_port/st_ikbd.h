@@ -39,7 +39,8 @@ UBYTE ikbd_joy0(void);
  * a tap shorter than one game frame is never lost.  Each call returns
  * and clears what happened since the previous call.
  */
-int ikbd_key_hit(int scancode);		/* key pressed since last call */
+int ikbd_key_hit(int scancode);		/* times the key was pressed since the
+					 * last call (0 = not pressed) */
 int ikbd_last_hit(void);		/* scancode of the last key pressed since
 					 * the last call (typing), 0 if none */
 UBYTE ikbd_joy1_hits(void);		/* joystick bits newly set since last call */

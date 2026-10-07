@@ -36,6 +36,7 @@ HDRS     = $(wildcard *.h) $(wildcard $(PORT)*.h) $(wildcard $(PORT)compat/*.h)
 HATARI_DIR ?= $(abspath $(PORT../../hatari_augmented))
 TOP     := $(HATARI_DIR)
 MACHINE ?= st
+# MEMSIZE: optional ST RAM for make run, in MB (Hatari's default is 1)
 # the 192k EmuTOS reports TOS 1.04, which Hatari only runs as a plain ST
 ifeq ($(MACHINE),st)
 TOS     ?= $(TOP)/roms/emutos/emutos-192k-1.4/etos192uk.img
@@ -54,7 +55,7 @@ $(OUT):
 
 run: $(PRG)
 	AGENT_TOS=$${AGENT_TOS:-$(TOS)} $(TOP)/tools/agent/hatari-agent-run.sh \
-		--machine $(MACHINE) --natfeats on \
+		--machine $(MACHINE) $(if $(MEMSIZE),--memsize $(MEMSIZE)) --natfeats on \
 		--harddrive $(CURDIR)/$(OUT) --auto 'C:\$(NAME).PRG' $(HATARI_OPTS)
 
 clean:

@@ -28,6 +28,7 @@ make run CROSS=... HATARI_OPTS="--cpulevel 6 --cpuclock 32 --addr24 off --ttram 
 Controls, as on the Amiga:
 - Cursor keys, keypad 8/4/6/2 or joystick 1: push the marble (up is away from you).
 - Z/X: turn the view. =/- or keypad +/-: zoom. C with up/down: tilt.
+- F (or F10): 3D at half resolution, for speed (see below).
 - P: pause. Esc: quit.
 - On the title: up/down picks the starting course, left/right picks one or two players
   (player 2 uses WASD, Q/E and Tab), C turns the music on or off, and Space starts.
@@ -38,9 +39,28 @@ Controls, as on the Amiga:
 |---|---|
 | everything except `softcel.c` | **Unmodified**, including `main_68k.c` (on `../falcon_3do`). |
 | `softcel.c` | The depth-buffer clear uses `movem` (32 bytes per instruction) on a 68020 or later under `__MINT__`. |
+| `glcels_soft.c` | Half resolution (under `__MINT__`): the 3D is drawn into a 160×120 buffer, with positions halved on the way to `softcel.c`, and doubled into the frame before the HUD text goes on at full resolution. |
+| `amiga68k.h` | Declares `sys_halfres` and `sys_cpu`. |
 | `data/` | The six courses, music themes and effects built by the 3DO version's tools (unchanged from upstream). |
 
 The frame is 320×240 15-bit RGB, converted to RGB565 by `sys3do.c`.
+
+## Half resolution
+
+F (F10 too: the keys that switch window and screen on the Amiga) draws
+the 3D at 160×120, doubled, with the HUD still sharp. It starts on for a
+68030 and off for a 68060 (the `_CPU` cookie).
+
+| fps in play | full | half |
+|---|---|---|
+| 68060 @ 32 MHz + TT-RAM | 12 | 17 |
+| stock 16 MHz Falcon030 | 1.2–1.5 | 2.0–2.3 |
+
+A stock Falcon gains little. Filling pixels is only a fifth of the frame
+there. The rest is spread over per-shape setup (64-bit edge slopes and
+depth planes), the 15→16 bit conversion, physics and the HUD. The blitter
+can't help, because each pixel is tested against the depth buffer and the
+sprites are scaled.
 
 ## Agent hooks
 

@@ -20,6 +20,14 @@
 extern UWORD *fb;                   /* the frame: FB_W x fb_h, rows top to bottom */
 extern int fb_h;
 
+#ifdef __MINT__
+/* Atari Falcon port (../falcon_3do/sys3do.c): -1 until the renderer can
+ * draw the 3D at half resolution, then 0 or 1 (F / F10 toggle it); the
+ * '_CPU' cookie (30, 60) */
+extern int sys_halfres;
+int sys_cpu(void);
+#endif
+
 enum { SYS_AUTO, SYS_WINDOW, SYS_RTG_SCREEN, SYS_AGA };
 
 int   sys_open(const char *title, int h, int scale, int mode);   /* 0 on failure */

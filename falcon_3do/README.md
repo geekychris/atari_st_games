@@ -31,6 +31,14 @@ game code compile unchanged. Upstream's two files are kept in each game as
   covered half the screen and its sprites were mis-scaled.
   `objdump` the code for that pattern if you change the flags.
 
+- **64-bit multiply and divide from the 68020-60 libgcc.** The program links
+  against the 68000 libraries, whose `__divdi3`/`__muldi3` call 32-bit
+  library routines. `f3do.mk` takes just those five objects from the
+  `m68020-60` multilib, which has no FPU code and no 64-bit `mul`/`div`
+  forms.
+- **`sys_halfres`**: F / F10 toggle it when the game's renderer supports
+  half resolution (Rolling Steel). `sys_cpu()` reads the `_CPU` cookie.
+
 ## Speed
 
 Spectral Keep runs on a stock 16 MHz Falcon030. Rolling Steel and Planet

@@ -39,8 +39,20 @@ vpath %.c . $(F3DO) $(FPORT) $(STPORT)
 
 all: $(PRG) $(OUT)/DATA
 
-$(PRG): $(OBJS)
-	$(CC) $(LDCPU) -o $@ $(OBJS) $(LIBS)
+# The 68000 libgcc builds 64-bit multiply and divide (which the 3D code
+# does per edge, per plane and per span) out of 32-bit library calls;
+# the 68020-60 multilib's use muls.l / divu.l. Only these are taken from
+# it: the rest of that multilib assumes an FPU, which a Falcon may lack
+# (they have no FPU code, and no 64-bit mul/div forms, so a 68060 runs them)
+LIBGCC020 := $(shell $(CC) -m68020-60 -print-libgcc-file-name)
+DI3       = _divdi3.o _udivdi3.o _moddi3.o _umoddi3.o _muldi3.o
+
+$(OUT)/obj/di3020.a: | $(OUT)/obj
+	cd $(OUT)/obj && $(CROSS)ar x $(LIBGCC020) $(DI3) && \
+		$(CROSS)ar rcs di3020.a $(DI3) && rm -f $(DI3)
+
+$(PRG): $(OBJS) $(OUT)/obj/di3020.a
+	$(CC) $(LDCPU) -o $@ $(OBJS) $(OUT)/obj/di3020.a $(LIBS)
 	@ls -l $@
 
 $(OUT)/obj/%.o: %.c $(HDRS) | $(OUT)/obj

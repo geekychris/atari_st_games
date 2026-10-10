@@ -42,9 +42,16 @@ THUMB_W, THUMB_H = 160, 100
 
 # Hatari options per machine for the drive (EmuTOS 1024k for both)
 MACHINES = {
-    "ste": ["--machine", "ste", "--memsize", "4", "--monitor", "rgb", "--dsp", "none"],
-    "megaste": ["--machine", "megaste", "--memsize", "4", "--monitor", "rgb", "--dsp", "none"],
-    "falcon": ["--machine", "falcon", "--memsize", "14", "--monitor", "vga", "--dsp", "none"],
+    "ste": ["--machine", "ste", "--memsize", "4", "--monitor", "rgb", "--dsp", "none",
+            "--ttram", "0"],
+    "megaste": ["--machine", "megaste", "--memsize", "4", "--monitor", "rgb", "--dsp", "none",
+                "--ttram", "0"],
+    "falcon": ["--machine", "falcon", "--memsize", "14", "--monitor", "vga", "--dsp", "none",
+               "--cpulevel", "3", "--cpuclock", "16", "--ttram", "0", "--addr24", "on"],
+    # an accelerated Falcon (a CT60's 68060, with TT-RAM): the games whose
+    # games.ini options ask for --cpulevel 6 (Rolling Steel, Planet Chomp)
+    "falcon060": ["--machine", "falcon", "--memsize", "14", "--monitor", "vga", "--dsp", "none",
+                  "--cpulevel", "6", "--cpuclock", "32", "--addr24", "off", "--ttram", "64"],
 }
 
 
@@ -103,6 +110,14 @@ def thumbnail(png, out):
         f.write(b"".join(w.to_bytes(2, "big") for w in words))
 
 
+def drive_machine(g):
+    """the launcher's machine name: falcon060 for a game that asks for a 68060"""
+    opts = g.options if isinstance(g.options, str) else " ".join(g.options or [])
+    if g.machine == "falcon" and "--cpulevel 6" in opts:
+        return "falcon060"
+    return g.machine
+
+
 def ascii(s):
     return s.encode("ascii", "replace").decode().replace("?", "-") if s else ""
 
@@ -129,7 +144,7 @@ def main():
     ap.add_argument("--out", default=os.path.join(HERE, "build", "drive"))
     ap.add_argument("--no-build", action="store_true", help="don't run make")
     ap.add_argument("--run", action="store_true", help="start Hatari on the drive")
-    ap.add_argument("--machine", default="ste", help="ste (default), megaste or falcon")
+    ap.add_argument("--machine", default="ste", help="ste (default), megaste, falcon or falcon060")
     ap.add_argument("--no-sound", action="store_true")
     ap.add_argument("--no-watch", action="store_true",
                     help="with --run: start Hatari and return (no machine switching)")
@@ -162,13 +177,15 @@ def main():
             p = os.path.join(g.build_dir, f)
             if os.path.isfile(p) and not f.endswith(".o"):
                 shutil.copy(p, os.path.join(dst, f.upper()))
+            elif os.path.isdir(p) and f != "obj":       # the game's DATA folder
+                shutil.copytree(p, os.path.join(dst, f.upper()))
         if g.screenshot and os.path.exists(g.screenshot):
             try:
                 thumbnail(g.screenshot, os.path.join(dst, "THUMB.DAT"))
             except ImportError:
                 print("no Pillow: no thumbnails")
         ini += ["[%s]" % g.id, "title=" + ascii(g.title), "folder=" + folder,
-                "program=" + g.program, "machine=" + g.machine]
+                "program=" + g.program, "machine=" + drive_machine(g)]
         ini += ["desc=" + l for l in wrap(" ".join(g.description.split()))]
         ini += ["ctrl=" + l for l in wrap(g.controls)]
         ini.append("")

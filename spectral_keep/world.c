@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /*
  * Tiny kinematic physics for one room (Physics.cs): axis-separated moves
  * against solid boxes, gravity, pushing and lift-riding. Fixed point, Q12.

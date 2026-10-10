@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /*
  * Loads a course written by tools/courses.py. The file is big-endian int32
  * throughout - the 3DO's own order - so loading is pointing structures into

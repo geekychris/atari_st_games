@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /*
  * The game around the marble (GameDirector.cs, Player.cs, IsoCamera.cs,
  * Progress.cs, Ghost.cs, DeathFx.cs): one clock that carries over between

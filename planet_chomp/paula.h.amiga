@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /*
  * Paula, for the classic 68k builds: the real chip. The 3DO versions drove
  * an emulation of it with the same register names (custom.aud[n].ac_ptr,

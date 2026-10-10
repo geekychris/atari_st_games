@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /*
  * The 3DO cel engine in software: see softcel.h. Integer only.
  * The same file is in planet_chomp and rolling_steel.

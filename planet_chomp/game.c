@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /*
  * Planet Chomp rules, from the Unity sources: GameDirector.cs (states,
  * scoring, keys, levels, scatter/chase clock), Ghost.cs (the arcade ghost

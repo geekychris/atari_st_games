@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /*
  * Every sound is synthesised at startup, as in Sfx.cs: a phase-integrated
  * oscillator (sweeping pitch never clicks), square / triangle / sine, short

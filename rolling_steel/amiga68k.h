@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /*
  * amiga68k.c: what the classic (68k, AmigaOS 3.x) builds of the 3DO ports
  * need from the machine. The same file is in planet_chomp, rolling_steel

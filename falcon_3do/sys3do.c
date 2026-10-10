@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /*
  * The machine layer of the 3DO-derived ports (planet_chomp, rolling_steel,
  * spectral_keep) on the Atari Falcon030: what their amiga68k.c and

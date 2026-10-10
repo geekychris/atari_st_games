@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /*
  * glcels.h on softcel.c, for the classic 68k build: the same render.c as
  * the AmigaOS 4 version, whose faces carry each corner's depth, so a depth

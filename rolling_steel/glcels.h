@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /*
  * glcels.c: what the 3DO version's cels.c did, in OpenGL (Mesa's software
  * rasteriser through OSMesa). render.c still projects everything itself in

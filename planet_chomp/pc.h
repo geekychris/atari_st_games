@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /*
  * Planet Chomp - 3DO version of geekychris/planet-chomp (Unity).
  *

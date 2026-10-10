@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /* Planet Chomp sounds (from Sfx.cs): synthesised at startup, played on Paula (3DO) / AHI (OS4) */
 #ifndef SFX_H
 #define SFX_H

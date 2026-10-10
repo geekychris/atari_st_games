@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /*
  * The game around the rooms (Game.cs): title, keeps, lives, keys, relics,
  * messages, moving between rooms, dying and winning. 50 logic steps/s.

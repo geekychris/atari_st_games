@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /* game.c: GameDirector.cs, Player.cs, Progress.cs and Ghost.cs */
 #ifndef GAME_H
 #define GAME_H

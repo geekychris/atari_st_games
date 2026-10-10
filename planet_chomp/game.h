@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /* Planet Chomp game logic (from GameDirector.cs, Ghost.cs, Chomper.cs,
  * Mover.cs): one call per 50 Hz step. */
 #ifndef GAME_H

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /* the game's 8x8 font (ZxFont.cs, an original Spectrum-style design): chars 32..127,
  * one byte per row, high bit on the left; '{' '|' '}' are the heart, gem and key icons */
 const unsigned char keep_font[96][8] = {

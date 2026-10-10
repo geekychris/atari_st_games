@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /*
  * Music and sound effects (Music.cs, Beeper.cs) on the Amiga layer's Paula,
  * i.e. the 3DO's DSP.

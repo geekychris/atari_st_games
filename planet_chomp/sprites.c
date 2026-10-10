@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /*
  * Sprite textures for the cel engine, drawn here once (32 x 32, 16-bit,
  * 0 = transparent): the chomper (4 facings x 3 mouth openings, normal and

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /*
  * Bullion Dash - Atari ST input (replaces the Amiga input.c): the same
  * API on the IKBD handler.  input_key() takes the Amiga raw key codes

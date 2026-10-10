@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /*
  * The course on screen (IsoCamera.cs): an orthographic camera at any yaw,
  * pitch and zoom, so the 3D is real - every visible face is projected each

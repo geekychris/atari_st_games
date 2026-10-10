@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /*
  * The cel engine for a stock Falcon030: see fastcel.h. Atari Falcon port.
  */

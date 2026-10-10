@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /*
  * Music and sounds (Music.cs, Sfx.cs) on the Amiga layer's Paula - the
  * 3DO's DSP. The themes and effects are rendered offline by tools/sounds.py.

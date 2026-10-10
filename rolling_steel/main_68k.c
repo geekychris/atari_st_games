@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /*
  * ROLLING STEEL - classic Amiga (68020+, AmigaOS 3.x) version, from the 3DO
  * version (3do-dev/projects/rolling_steel) like the AmigaOS 4 one.

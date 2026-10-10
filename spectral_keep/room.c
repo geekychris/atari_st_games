@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /*
  * One room, built from its level data and simulated while the player is in
  * it (RoomView.cs), and everything that moves in it (Actors.cs). Leaving and

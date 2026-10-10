@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /*
  * Sky Knights - Atari ST input (replaces the Amiga input.c): player 1 on
  * the keyboard (cursor keys / A,D move, up / W / Space flap), player 2 on

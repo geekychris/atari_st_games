@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /*
  * RJ's Birthday Bash - Atari ST input (replaces the Amiga input.c): the
  * same keys and joystick 1 from the IKBD handler.  Name entry gets the

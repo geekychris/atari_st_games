@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /*
  * Ace Pilot - Atari ST input (replaces the Amiga input.c): the same keys
  * (cursor keys / WASD, Space / Alt fire, Q / E throttle, P display mode,

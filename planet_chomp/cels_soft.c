@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /*
  * The 3DO version's cel calls (pc.h: pc_quad, pc_sprite, pc_tex_create)
  * on softcel.c, for the classic 68k build: every cel is drawn into the

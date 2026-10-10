@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /*
  * The 3DO-derived ports' Paula API (their paula.h / paula68k.c) on the
  * Paula emulation of the ST layer (../st_port/paula.c, Falcon DMA sound).

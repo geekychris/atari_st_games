@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /*
  * The planet in cels. Each frame:
  *  - camera basis as in PlanetCamera.cs (hover above the focus, tilted back,

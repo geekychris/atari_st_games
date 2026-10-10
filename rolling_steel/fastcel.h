@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /*
  * fastcel.c: Atari Falcon port. The cel engine's jobs (flat quads and
  * scaled sprites) for a stock 16 MHz Falcon030, in the way 8/16-bit era 3D

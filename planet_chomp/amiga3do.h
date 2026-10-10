@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /*
  * The little of the 3DO compatibility layer (amiga3do.h) that game.c uses
  * on AmigaOS 4: the pad bits. main_os4.c maps the keyboard onto them.

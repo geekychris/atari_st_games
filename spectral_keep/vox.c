@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /*
  * The models of Models.cs - boxes and the odd sphere - drawn into images by
  * a small software rasteriser, once: at startup for the characters and

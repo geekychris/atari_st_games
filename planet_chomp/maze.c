@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /*
  * The sphere maze (SphereMaze.cs): a cube sphere of 6 x N x N cells on an
  * integer lattice of side 2N, so neighbour lookups are exact across cube

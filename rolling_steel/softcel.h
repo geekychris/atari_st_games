@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Chris Collins <chris@hitorro.com>
+
 /*
  * softcel.c: the 3DO cel engine's two jobs done by the CPU, for the classic
  * 68k builds: a flat-coloured quadrilateral given its four corners, and a

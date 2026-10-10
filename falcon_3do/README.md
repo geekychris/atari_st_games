@@ -51,4 +51,4 @@ Falcon manages 1–2 fps. In Hatari, emulate a CT60-style accelerated Falcon:
 make run HATARI_OPTS="--cpulevel 6 --cpuclock 32 --addr24 off --ttram 64"
 ```
 
-`--ttram` needs `--addr24 off`. `examples/games.ini` starts them this way.
+`--ttram` needs `--addr24 off`. `../games.ini` starts them this way.

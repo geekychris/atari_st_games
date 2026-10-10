@@ -24,6 +24,9 @@
 #include <stdlib.h>
 #include "rs.h"
 #include "glcels.h"
+#ifdef __MINT__
+int glc_painter(void);                  /* Falcon port: glcels_soft.c */
+#endif
 
 int render_stats_quads, render_stats_cels;
 
@@ -519,6 +522,19 @@ void render_scene(Cam *c, const RBall *b, int nb)
     }
     /* everything solid (the depth buffer sorts it), then what blends with
      * it, far to near */
+#ifdef __MINT__
+    /* Atari Falcon port: with no depth buffer (glcels_soft.c's fast mode)
+     * it is all one pass, far to near, so a shadow goes under the marble */
+    {
+    int one = glc_painter();
+    for (pass = 0; pass < (one ? 1 : 2); pass++) {
+        if (pass) glc_flush();
+        for (i = NBUCKET - 1; i >= 0; i--) {
+            short k;
+            for (k = head[i]; k >= 0; k = items[k].next) {
+                DrawItem *it = &items[k];
+                if (!one && (it->pixc != 0) != pass) continue;
+#else
     for (pass = 0; pass < 2; pass++) {
         if (pass) glc_flush();
         for (i = NBUCKET - 1; i >= 0; i--) {
@@ -526,6 +542,7 @@ void render_scene(Cam *c, const RBall *b, int nb)
             for (k = head[i]; k >= 0; k = items[k].next) {
                 DrawItem *it = &items[k];
                 if ((it->pixc != 0) != pass) continue;
+#endif
                 if (it->type == 0) {
                     long x[4], y[4];
                     x[0] = it->a[0]; y[0] = it->a[1]; x[1] = it->a[2]; y[1] = it->a[3];
@@ -536,6 +553,9 @@ void render_scene(Cam *c, const RBall *b, int nb)
             }
         }
     }
+#ifdef __MINT__
+    }
+#endif
     glc_view(0, SCREEN_W);
     nitems = 0;
 }

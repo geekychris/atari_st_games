@@ -121,22 +121,23 @@ void sys_present(void)
 	fgfx_swap();
 }
 
-/* F / F10 (the Amiga's window <-> screen switch) toggles half
- * resolution for a renderer that supports it (it sets sys_halfres to 0
- * or 1, see rolling_steel's glcels_soft.c); otherwise nothing to switch */
-int sys_halfres = -1;
+/* F / F10 (the Amiga's window <-> screen switch) cycle the display
+ * modes a game's renderer offers: it sets sys_modes (the count, 2 or
+ * more), sys_mode_names and sys_mode (see rolling_steel's glcels_soft.c);
+ * otherwise there is nothing to switch */
+int sys_modes, sys_mode;
+const char *const *sys_mode_names;
 
 int sys_toggle(void)
 {
-	if (sys_halfres >= 0)
-		sys_halfres ^= 1;
+	if (sys_modes > 1)
+		sys_mode = (sys_mode + 1) % sys_modes;
 	return 1;
 }
 
 const char *sys_mode_name(void)
 {
-	return sys_halfres == 1 ? "Falcon true colour, 3D at half resolution"
-				: "Falcon true colour";
+	return sys_modes > 1 ? sys_mode_names[sys_mode] : "Falcon true colour";
 }
 
 /* the CPU from the '_CPU' cookie: 30 for a 68030, 60 for a 68060 */

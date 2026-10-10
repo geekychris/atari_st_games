@@ -36,8 +36,10 @@ game code compile unchanged. Upstream's two files are kept in each game as
   library routines. `f3do.mk` takes just those five objects from the
   `m68020-60` multilib, which has no FPU code and no 64-bit `mul`/`div`
   forms.
-- **`sys_halfres`**: F / F10 toggle it when the game's renderer supports
-  half resolution (Rolling Steel). `sys_cpu()` reads the `_CPU` cookie.
+- **Display modes**: F / F10 cycle `sys_mode` through the `sys_modes`
+  modes a game's renderer offers, and `sys_mode_name()` reports the current
+  one (Rolling Steel: fast or depth buffer, each at full or half
+  resolution). `sys_cpu()` reads the `_CPU` cookie.
 
 ## Speed
 

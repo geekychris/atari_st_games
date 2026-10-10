@@ -61,6 +61,15 @@ void sc_clip(int x0, int x1, int xoff)
 
 /* ---- blending ---- */
 
+#ifdef SOFTCEL_RGB565
+/* Atari Falcon port: the frame and the colours are the Falcon's RGB565
+ * (rolling_steel's fastcel.c, which this calls, says how) */
+#include "fastcel.h"
+static unsigned short blend(unsigned short dst, unsigned short src, unsigned long pixc)
+{
+    return fc_blend(dst, src, pixc);
+}
+#else
 static unsigned short blend(unsigned short dst, unsigned short src, unsigned long pixc)
 {
     unsigned long h = pixc >> 16;
@@ -83,6 +92,7 @@ static unsigned short blend(unsigned short dst, unsigned short src, unsigned lon
     }
     return src;
 }
+#endif
 
 /* ---- quads: edges into left / right extents, then spans ---- */
 

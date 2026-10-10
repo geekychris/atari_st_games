@@ -416,10 +416,13 @@ static int menu(void)
 		Vsync();
 		joy = ikbd_joy1();
 		hits = ikbd_joy1_hits();
-		if (ikbd_key_hit(SC_UP) || (hits & 1))
-			dir = -1;
-		if (ikbd_key_hit(SC_DOWN) || (hits & 2))
-			dir = 1;
+		/* every press counts, also those made while the screen was
+		 * being redrawn */
+		dir = ikbd_key_hit(SC_DOWN) - ikbd_key_hit(SC_UP);
+		if (hits & 1)
+			dir--;
+		if (hits & 2)
+			dir++;
 		/* held: repeat after 20 frames, then every 5 */
 		if (!dir && (ikbd_keys[SC_UP] || ikbd_keys[SC_DOWN] || (joy & 3))) {
 			if (++repeat > 20 && !(repeat % 5))
@@ -427,8 +430,11 @@ static int menu(void)
 		} else if (!dir)
 			repeat = 0;
 		if (dir) {
+			int to = sel + dir;
+			if (to < 0) to = 0;
+			if (to >= ngames) to = ngames - 1;
 			Super((void *)ssp);
-			select_game(sel + dir);
+			select_game(to);
 			ssp = Super(0L);
 		}
 		if (ikbd_key_hit(SC_RETURN) || ikbd_key_hit(SC_SPACE) || (hits & 0x80)) {

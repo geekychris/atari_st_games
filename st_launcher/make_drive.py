@@ -5,9 +5,9 @@
 
     python3 make_drive.py [--out build/drive] [--no-build] [--run [--machine ste]]
 
-Reads examples/games.ini (the host launcher's game list) and writes:
+Reads games.ini (the host launcher's game list) and writes:
 
-    <out>/LAUNCHER.PRG        the menu (examples/st_launcher)
+    <out>/LAUNCHER.PRG        the menu (st_launcher)
     <out>/GAMES.INI           the games, in the launcher's format
     <out>/GAMES/<NAME>/...    each game's build/ files (program + data)
     <out>/GAMES/<NAME>/THUMB.DAT  160x100 thumbnail of its screenshot
@@ -147,7 +147,7 @@ def main():
     os.makedirs(os.path.join(out, "GAMES"))
     shutil.copy(os.path.join(HERE, "build", "LAUNCHER.PRG"), out)
 
-    ini = ["; written by examples/st_launcher/make_drive.py from examples/games.ini", ""]
+    ini = ["; written by st_launcher/make_drive.py from games.ini", ""]
     for g in lch.games:
         if build:
             lch.make(g)

@@ -147,6 +147,40 @@ static int font_init(void)
     return 1;
 }
 
+#ifdef __MINT__
+/* Atari Falcon port: each glyph row straight into fb (a fill() call per
+ * pixel was an eighth of a stock Falcon's frame) */
+static void text_scaled(int x, int y, const char *s, int scale, int pen)
+{
+    UWORD c = pen15[pen];
+    for (; *s; s++, x += 8 * scale) {
+        const unsigned char *g = glyph[(unsigned char)*s];
+        int r, b, k;
+        if (x < 0 || x + 8 * scale > SCREEN_W || y < 0 || y + 8 * scale > SCREEN_H) {
+            for (r = 0; r < 8; r++)                 /* at an edge: clipped by fill() */
+                for (b = 0; b < 8; b++)
+                    if (g[r] & (0x80 >> b))
+                        fill(x + b * scale, y + r * scale, x + b * scale + scale - 1, y + r * scale + scale - 1, pen);
+            continue;
+        }
+        for (r = 0; r < 8; r++) {
+            unsigned int bits = g[r];
+            UWORD *row = fb + (long)(y + r * scale) * SCREEN_W + x;
+            if (!bits) continue;
+            if (scale == 1) {
+                for (b = 0; bits; b++, bits = (bits << 1) & 0xFF)
+                    if (bits & 0x80) row[b] = c;
+            } else
+                for (k = 0; k < scale; k++, row += SCREEN_W)
+                    for (b = 0; b < 8; b++)
+                        if (bits & (0x80 >> b)) {
+                            int i;
+                            for (i = 0; i < scale; i++) row[b * scale + i] = c;
+                        }
+        }
+    }
+}
+#else
 static void text_scaled(int x, int y, const char *s, int scale, int pen)
 {
     for (; *s; s++, x += 8 * scale) {
@@ -158,6 +192,7 @@ static void text_scaled(int x, int y, const char *s, int scale, int pen)
                     fill(x + b * scale, y + r * scale, x + b * scale + scale - 1, y + r * scale + scale - 1, pen);
     }
 }
+#endif
 
 /* ---- the HUD: listed while the GL frame is drawn (its shaded boxes go
  * to GL there and then), drawn on top once GL has finished ---- */
@@ -410,6 +445,9 @@ int main(int argc, char **argv)
     if (scale < 1) scale = 1;
     if (scale > 4) scale = 4;
     bridge = ab_init("ROLL") == 0;
+#ifdef __MINT__
+    sys_rgb565 = 1;                     /* Falcon port: draw straight into the screen */
+#endif
     if (!sys_open("Rolling Steel", SCREEN_H, scale, mode)) {
         printf("rolling_steel: can't open a window or screen\n");
         rc = 20;
@@ -417,7 +455,11 @@ int main(int argc, char **argv)
     }
     if (!glc_open(1)) { printf("rolling_steel: no memory for the depth buffer\n"); rc = 20; goto done; }
     for (i = 0; i < P_COUNT; i++)
+#ifdef __MINT__
+        pen15[i] = (UWORD)((((pen_rgb[i] >> 19) & 31) << 11) | (((pen_rgb[i] >> 10) & 63) << 5) | ((pen_rgb[i] >> 3) & 31));
+#else
         pen15[i] = (UWORD)((((pen_rgb[i] >> 19) & 31) << 10) | (((pen_rgb[i] >> 11) & 31) << 5) | ((pen_rgb[i] >> 3) & 31));
+#endif
     if (!timer_open()) { printf("rolling_steel: no timer.device\n"); rc = 20; goto done; }
     if (!font_init()) AB_W("topaz 8 not available: no HUD text");
 

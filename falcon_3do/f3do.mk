@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Chris Collins <chris@hitorro.com>
 # Shared build rules for the 3DO-derived Amiga ports on the Atari Falcon030
 # (planet_chomp, rolling_steel, spectral_keep).  A port's Makefile sets
 # NAME and SRCS (the game's files and its 68k main loop), optional
@@ -31,7 +33,10 @@ L_SRCS   = $(F3DO)sys3do.c $(FPORT)fgfx.c $(FPORT)abstub.c $(STPORT)paula.c \
            $(STPORT)st_ikbd.c $(STPORT)natfeats.c $(STPORT)amiga_dos.c
 OBJS     = $(patsubst %,$(OUT)/obj/%.o,$(notdir $(basename $(SRCS) $(L_SRCS))))
 HDRS     = $(wildcard *.h) $(wildcard $(F3DO)*.h) $(wildcard $(F3DO)compat/*.h) $(wildcard $(STPORT)*.h)
-TOP     := $(abspath $(F3DO)../..)
+# Hatari (with the agent tools and EmuTOS images) lives in a separate
+# checkout of geekychris/hatari_augmented; default: next to this repo.
+HATARI_DIR ?= $(abspath $(F3DO)../../hatari_augmented)
+TOP     := $(HATARI_DIR)
 TOS     ?= $(TOP)/roms/emutos/emutos-1024k-1.4/etos1024k.img
 HATARI_FALCON ?= --machine falcon --dsp none --memsize 14 --monitor vga
 

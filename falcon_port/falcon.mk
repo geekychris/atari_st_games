@@ -37,7 +37,7 @@ OBJS     = $(patsubst %,$(OUT)/obj/%.o,$(notdir $(basename $(ALL_SRCS))))
 HDRS     = $(wildcard *.h) $(wildcard $(FPORT)*.h) $(wildcard $(FPORT)compat/*.h) $(wildcard $(STPORT)*.h)
 # Hatari (with the agent tools and EmuTOS images) lives in a separate
 # checkout of geekychris/hatari_augmented; default: next to this repo.
-HATARI_DIR ?= $(abspath $(FPORT../../hatari_augmented))
+HATARI_DIR ?= $(abspath $(FPORT)../../hatari_augmented)
 TOP     := $(HATARI_DIR)
 TOS     ?= $(TOP)/roms/emutos/emutos-1024k-1.4/etos1024k.img
 # 14 MB TT RAM-less Falcon, VGA monitor (320x240 true colour)

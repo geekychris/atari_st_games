@@ -33,7 +33,7 @@ ST_SRCS  = $(PORT)st_gfx.c $(PORT)st_ikbd.c $(PORT)st_ym.c $(PORT)natfeats.c \
 HDRS     = $(wildcard *.h) $(wildcard $(PORT)*.h) $(wildcard $(PORT)compat/*.h)
 # Hatari (with the agent tools and EmuTOS images) lives in a separate
 # checkout of geekychris/hatari_augmented; default: next to this repo.
-HATARI_DIR ?= $(abspath $(PORT../../hatari_augmented))
+HATARI_DIR ?= $(abspath $(PORT)../../hatari_augmented)
 TOP     := $(HATARI_DIR)
 MACHINE ?= st
 # MEMSIZE: optional ST RAM for make run, in MB (Hatari's default is 1)

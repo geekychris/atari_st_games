@@ -45,7 +45,7 @@
 #define TEXT_ROWS 8
 
 struct game {
-	char id[20], title[24], folder[12], program[16], machine[8];
+	char id[20], title[24], folder[12], program[16], machine[12];
 	char desc[MAX_LINES][41], ctrl[MAX_LINES][41];
 	int ndesc, nctrl;
 };
@@ -53,6 +53,7 @@ struct game {
 static struct game games[MAX_GAMES];
 static int ngames, sel, top;
 static long mch;			/* _MCH cookie: machine type */
+static long cpu;			/* _CPU cookie: 30 or 60 (an accelerated Falcon) */
 static int can_switch;			/* C:\SWITCH.ON: a host supervisor */
 
 /* menu pens 0-7 (pens 8-15 are the thumbnail's) */
@@ -72,15 +73,23 @@ static void log_line(const char *msg)
 /* ---- machine ---- */
 
 /* the cookie jar pointer ($5a0) is in supervisor memory: Supexec */
-static long machine_cookie(void)
+static long cookie_id;
+
+static long read_cookie(void)
 {
 	long *jar = *(long **)0x5a0;
 	if (!jar)
 		return -1;
 	for (; jar[0]; jar += 2)
-		if (jar[0] == 0x5f4d4348)	/* '_MCH' */
+		if (jar[0] == cookie_id)
 			return jar[1];
 	return -1;
+}
+
+static long cookie(long id)
+{
+	cookie_id = id;
+	return Supexec(read_cookie);
 }
 
 static const char *machine_name(void)
@@ -89,17 +98,20 @@ static const char *machine_name(void)
 	case 0: return "ST";
 	case 1: return (mch & 0xffff) == 0x10 ? "Mega STE" : "STE";
 	case 2: return "TT";
-	case 3: return "Falcon030";
+	case 3: return cpu >= 40 ? "Falcon 060" : "Falcon030";
 	}
 	return "Atari";
 }
 
-/* can this machine run the game?  (ST games: ST, STE, Mega STE) */
+/* can this machine run the game?  (ST games: ST, STE, Mega STE; falcon060:
+ * a Falcon with a 68060, as on a CT60 card; falcon games keep the 030) */
 static int runnable(const struct game *g)
 {
 	int m = (int)(mch >> 16);
+	if (!strcmp(g->machine, "falcon060"))
+		return m == 3 && cpu >= 40;
 	if (!strcmp(g->machine, "falcon"))
-		return m == 3;
+		return m == 3 && cpu < 40;
 	if (!strcmp(g->machine, "ste") || !strcmp(g->machine, "megaste"))
 		return m == 1;
 	return m == 0 || m == 1;
@@ -107,6 +119,8 @@ static int runnable(const struct game *g)
 
 static const char *needs(const struct game *g)
 {
+	if (!strcmp(g->machine, "falcon060"))
+		return "needs a Falcon with a 68060";
 	if (!strcmp(g->machine, "falcon"))
 		return "needs a Falcon030";
 	if (!strcmp(g->machine, "ste") || !strcmp(g->machine, "megaste"))
@@ -359,8 +373,8 @@ static void request_switch(const struct game *g)
 	const char *to = is_falcon() ? "ste" : "falcon";
 	char msg[48];
 
-	if (g && !strcmp(g->machine, "falcon"))
-		to = "falcon";
+	if (g && (!strcmp(g->machine, "falcon") || !strcmp(g->machine, "falcon060")))
+		to = g->machine;
 	else if (g)
 		to = "ste";
 	if (!can_switch) {
@@ -375,7 +389,8 @@ static void request_switch(const struct game *g)
 			Fclose((short)fh);
 		}
 	}
-	snprintf(msg, sizeof(msg), "Restarting as %s...", strcmp(to, "falcon") ? "an STE" : "a Falcon030");
+	snprintf(msg, sizeof(msg), "Restarting as %s...", !strcmp(to, "falcon060") ? "a Falcon 060" :
+		 strcmp(to, "falcon") ? "an STE" : "a Falcon030");
 	message(msg, P_HEAD);
 	snprintf(msg, sizeof(msg), "SWITCH %s", to);
 	log_line(msg);
@@ -488,7 +503,8 @@ int main(void)
 	nf_init();
 	for (int i = 0; i < 16; i++)
 		old_pal[i] = (UWORD)Setcolor(i, -1);
-	mch = Supexec(machine_cookie);
+	mch = cookie(0x5f4d4348);		/* '_MCH' */
+	cpu = cookie(0x5f435055);		/* '_CPU' */
 	if (mch < 0)
 		mch = 0;
 	if (!load_ini("C:\\GAMES.INI")) {

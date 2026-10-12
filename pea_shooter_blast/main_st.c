@@ -9,8 +9,9 @@
  * blocks (the level pre-rendered into a strip that the STE blitter
  * scrolls, cached strings).  The sound effects are the original's,
  * played through the C ptplayer on the Paula emulation (STE DMA sound).
- * The original's MOD music is not included; a ProTracker module put next
- * to the program as MUSIC.MOD is played as on the Amiga.
+ * The MOD music ("Pea Patrol", an original tune made by
+ * ../tools/modgen) is copied next to the program as MUSIC.MOD by the
+ * Makefile and played as on the Amiga.
  *
  * The main loop is main.c's, with the logic run once per 50 Hz VBL (as
  * on the Amiga) and the drawing once per frame.

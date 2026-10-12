@@ -11,25 +11,25 @@ MIT licensed, same as the originals (see [LICENSE](LICENSE)).
 | Game | Machine | |
 |---|---|---|
 | [Uranus Lander](uranus_lander) | ST | land on the pads of Uranus, with an autopilot |
-| [Nova Defense](nova_defense) | ST | invaders, with a bot |
-| [Frank the Frog](frank_the_frog) | ST | Frogger-style road and river crossing |
+| [Nova Defense](nova_defense) | ST | fixed-screen alien shooter, with a bot |
+| [Frank the Frog](frank_the_frog) | ST | road and river crossing |
 | [Rock Blaster](rock_blaster) | STE | vector rock shooter |
-| [Orbital Patrol](orbital_patrol) | STE | Defender-style, MOD music |
+| [Orbital Patrol](orbital_patrol) | STE | side-scrolling planet defence, MOD music |
 | [Jump Quest](jump_quest) | STE | platformer |
-| [StakAttack](stakattack) | STE | falling blocks, MOD music |
-| [Dot Chase](dot_chase) | STE | maze dot-eater |
-| [Lunar Rider](lunar_rider) | STE | Moon Patrol-style, blitter scrolling |
+| [StakAttack](stakattack) | STE | falling gems, MOD music |
+| [Dot Chase](dot_chase) | STE | ladybug and spiders in a hedge maze |
+| [Lunar Rider](lunar_rider) | STE | moon buggy ride, blitter scrolling |
 | [Pea Shooter Blast](pea_shooter_blast) | STE | side-scrolling tank, blitter scrolling |
-| [Rescue on Fractalus](fractalus) | Falcon030 | Rescue on Fractalus-style voxel terrain |
-| [Void Trader](void_trader) | Falcon030 | Elite-style 3D trading |
-| [Sky Knights](sky_knights) | STE | Joust-style aerial combat |
-| [Orb Hunter](orb_hunter) | STE | Metroid-style exploration platformer |
+| [Canyon Rescue](canyon_rescue) | Falcon030 | pilot rescue over voxel terrain |
+| [Void Trader](void_trader) | Falcon030 | 3D space trading and combat |
+| [Sky Knights](sky_knights) | STE | aerial jousting |
+| [Orb Hunter](orb_hunter) | STE | cavern exploration platformer |
 | [Ace Pilot](ace_pilot) | Falcon030 | 3D wireframe biplane dogfights |
-| [Bullion Dash](bullion_dash) | STE | Lode Runner-style, with a level editor |
+| [Bullion Dash](bullion_dash) | STE | gold-digging puzzle platformer, with a level editor |
 | [RJ's Birthday Bash](rj_birthday) | STE | party arcade for RJ Mical's 70th |
-| [Spectral Keep](spectral_keep) | Falcon030 | isometric adventure (Knight Lore style) |
+| [Spectral Keep](spectral_keep) | Falcon030 | isometric flip-screen adventure |
 | [Rolling Steel](rolling_steel) | Falcon + 68060 (CT60) | isometric marble racer |
-| [Planet Chomp](planet_chomp) | Falcon + 68060 (CT60) | Pac-Man on a sphere |
+| [Planet Chomp](planet_chomp) | Falcon + 68060 (CT60) | maze chase on a sphere |
 
 ## Screenshots
 
@@ -49,7 +49,7 @@ MIT licensed, same as the originals (see [LICENSE](LICENSE)).
 <tr>
 <td align="center" width="25%"><a href="lunar_rider"><img src="lunar_rider/docs/ride.png" width="200" alt="Lunar Rider"></a><br>Lunar Rider<br><sub>STE</sub></td>
 <td align="center" width="25%"><a href="pea_shooter_blast"><img src="pea_shooter_blast/docs/enemies.png" width="200" alt="Pea Shooter Blast"></a><br>Pea Shooter Blast<br><sub>STE</sub></td>
-<td align="center" width="25%"><a href="fractalus"><img src="fractalus/docs/flight.png" width="200" alt="Rescue on Fractalus"></a><br>Rescue on Fractalus<br><sub>Falcon030</sub></td>
+<td align="center" width="25%"><a href="canyon_rescue"><img src="canyon_rescue/docs/flight.png" width="200" alt="Canyon Rescue"></a><br>Canyon Rescue<br><sub>Falcon030</sub></td>
 <td align="center" width="25%"><a href="void_trader"><img src="void_trader/docs/combat.png" width="200" alt="Void Trader"></a><br>Void Trader<br><sub>Falcon030</sub></td>
 </tr>
 <tr>
@@ -103,7 +103,7 @@ Check it out next to this repo, or point `HATARI_DIR` at it:
 git clone https://github.com/geekychris/hatari_augmented ../hatari_augmented
 ../hatari_augmented/tools/agent/fetch-cross-mint.sh     # once: cross compiler
 make -C rock_blaster run                                # Hatari + agent API, autostarts the game
-HATARI_DIR=~/src/hatari_augmented make -C fractalus run
+HATARI_DIR=~/src/hatari_augmented make -C canyon_rescue run
 python3 ../hatari_augmented/tools/games/launcher.py --ini games.ini   # host-side launcher
 ```
 

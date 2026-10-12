@@ -7,8 +7,8 @@
  * pitches: Paula period P with the original 32-sample waveforms is
  * 3546895 / (32 P) Hz, i.e. a YM tone period of P * 1.128.
  *
- *   channel A  shoot / UFO warble
- *   channel B  march (4 note bass)       } melody shares B between
+ *   channel A  shoot / comet sweep
+ *   channel B  swarm pulse (3 blips)     } melody shares B between
  *   channel C  explosions (noise)        } march notes
  */
 #include "sound.h"
@@ -16,7 +16,8 @@
 
 #define PAULA_TO_YM(p) ((UWORD)(((ULONG)(p) * 1128) / 1000))
 
-static const UWORD march_periods[4] = { 846, 950, 1066, 1130 };
+/* swarm pulse: three rising blips */
+static const UWORD march_periods[3] = { 640, 538, 452 };
 static const UWORD melody_periods[16] = {
 	504, 423, 336, 423, 504, 566, 504, 423,
 	377, 336, 283, 336, 377, 423, 504, 566
@@ -46,15 +47,16 @@ void sound_play_ufo(BOOL on)         { ufo_on = on; }
 
 void sound_play_march(WORD note)
 {
-	march_period = PAULA_TO_YM(march_periods[note & 3]);
-	march_t = 6;
+	march_period = PAULA_TO_YM(march_periods[(note & 0x7fff) % 3]);
+	march_t = 3;
 }
 
 void sound_update(void)
 {
 	int tone = 0, noise = 0;
 
-	/* A: shoot (falling sweep) or UFO warble */
+	/* A: shoot (falling sweep) or comet whoosh (a rising sweep that
+	 * restarts every 32 frames) */
 	if (shoot_t)
 	{
 		ym_tone(0, 60 + (8 - shoot_t) * 25);
@@ -64,8 +66,8 @@ void sound_update(void)
 	}
 	else if (ufo_on)
 	{
-		ufo_phase = (ufo_phase + 1) & 15;
-		ym_tone(0, 90 + (ufo_phase < 8 ? ufo_phase : 16 - ufo_phase) * 6);
+		ufo_phase = (ufo_phase + 1) & 31;
+		ym_tone(0, PAULA_TO_YM(420 - ufo_phase * 7));
 		ym_volume(0, 9);
 		tone |= 1;
 	}
@@ -76,7 +78,7 @@ void sound_update(void)
 	if (march_t)
 	{
 		ym_tone(1, march_period);
-		ym_volume(1, 9 + march_t / 2);
+		ym_volume(1, 10 + march_t);
 		tone |= 2;
 		march_t--;
 	}

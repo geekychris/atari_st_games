@@ -74,7 +74,7 @@ typedef struct {
     WORD  facing;       /* 0=right, 1=left */
     WORD  alive;
     LONG  health;       /* current energy 0..max_energy */
-    LONG  max_energy;   /* increases with energy tanks */
+    LONG  max_energy;   /* increases with power cells */
     LONG  missiles;     /* missile count */
     LONG  max_missiles;
     WORD  gun_timer;

@@ -2,7 +2,7 @@
 
 Port of Planet Chomp from
 [geekychris/amiga_games](https://github.com/geekychris/amiga_games) (`planet_chomp/`,
-commit in `.upstream-commit`). It's a Pac-Man homage on a tiny planet: the maze wraps
+commit in `.upstream-commit`). It's a maze chase on a tiny planet: the maze wraps
 round a sphere. Eat every crumb, dodge the four spooks, and grab a golden key to turn the tables.
 It runs on the Falcon layer in [../falcon_3do](../falcon_3do).
 

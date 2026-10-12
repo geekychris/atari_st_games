@@ -112,7 +112,7 @@ void player_update(Player *p, UWORD input) {
             ty = top_y / TILE_SIZE;
             new_y = (ty + 1) * TILE_SIZE;
             p->vy = 0;
-            /* Hit block from below - check for question block */
+            /* Hit block from below - check for gift block */
             if (level_get_tile(p->x / TILE_SIZE + 1, ty) == TILE_QBLOCK ||
                 level_get_tile((p->x + PLAYER_W - 3) / TILE_SIZE, ty) == TILE_QBLOCK) {
                 int btx = (p->x + PLAYER_W / 2) / TILE_SIZE;

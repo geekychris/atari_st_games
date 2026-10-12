@@ -1,6 +1,6 @@
 # Sky Knights: Atari STE port
 
-Port of Sky Knights, the Joust-style aerial combat game in
+Port of Sky Knights, the aerial jousting game in
 [geekychris/amiga_games](https://github.com/geekychris/amiga_games) (`sky_knights/`,
 commit in `.upstream-commit`), built on the shared ST layer in `../st_port`.
 

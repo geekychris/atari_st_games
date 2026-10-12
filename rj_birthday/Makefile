@@ -3,9 +3,10 @@
 # RJ's 70th Birthday Bash - Atari STE port
 #   make CROSS=~/computers/atari-cc/opt/cross-mint/bin/m68k-atari-mintelf-
 #   make run
-# The original's music (party.mod, birthday.mod) and arcade voice clips
-# are not included; for personal use, copy them from an amiga_games
-# checkout:  make assets UPSTREAM=path/to/amiga_games
+# The music (party.mod, birthday.mod) and the arcade voice clips
+# (snd_arcade1..4.raw) are made by tools/modgen in geekychris/3do-dev:
+# original tunes, "Happy Birthday to You" (public domain) and synthetic
+# speech
 NAME     = RJBDAY
 SRCS     = main_st.c game.c draw.c rooms.c sound.c st_input.c
 ST_EXTRA = paula ptplayer amiga_dos ab_log st_blit
@@ -23,9 +24,16 @@ run: $(OUT)/GUESTS.TXT
 $(OUT)/GUESTS.TXT: guests.txt | $(OUT)
 	cp $< $@
 
-assets: | $(OUT)
-	@test -n "$(UPSTREAM)" || { echo "usage: make assets UPSTREAM=path/to/amiga_games"; exit 1; }
-	cp $(UPSTREAM)/rj_birthday/party.mod $(OUT)/PARTY.MOD
-	cp $(UPSTREAM)/rj_birthday/birthday.mod $(OUT)/BIRTHDAY.MOD
-	for i in 1 2 3 4; do cp $(UPSTREAM)/rj_birthday/snd_arcade$$i.raw $(OUT)/SND_ARC$$i.RAW; done
-.PHONY: assets
+# the music and voice clips, under the 8.3 names the AmigaDOS shim maps
+# them to (sound.c asks for snd_arc1..4.raw: snd_arcade1..4 would all
+# shorten to SND_ARCA.RAW)
+ASSETS = $(OUT)/PARTY.MOD $(OUT)/BIRTHDAY.MOD $(OUT)/SND_ARC1.RAW $(OUT)/SND_ARC2.RAW \
+         $(OUT)/SND_ARC3.RAW $(OUT)/SND_ARC4.RAW
+all: $(ASSETS)
+run: $(ASSETS)
+$(OUT)/PARTY.MOD: party.mod | $(OUT)
+	cp $< $@
+$(OUT)/BIRTHDAY.MOD: birthday.mod | $(OUT)
+	cp $< $@
+$(OUT)/SND_ARC%.RAW: snd_arcade%.raw | $(OUT)
+	cp $< $@

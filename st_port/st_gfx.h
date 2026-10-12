@@ -83,6 +83,9 @@ void gfx_mark(struct RastPort *rp, WORD x0, WORD y0, WORD x1, WORD y1);	/* logic
  */
 void gfx_or16_row(struct RastPort *rp, const WORD *xs, int n, WORD y,
                   const UWORD *rows, int h, int col);
+/* the same for a multicolour sprite: pm[p] is bit plane p's mask (rows) */
+void gfx_or16_row_planes(struct RastPort *rp, const WORD *xs, int n, WORD y,
+                         const UWORD (*pm)[16], int h);
 
 /* Full-width bands that are completely redrawn every frame (e.g. lanes
  * of traffic): copy logical rows y0..y1 from the background into the

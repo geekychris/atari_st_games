@@ -8,9 +8,9 @@
  * main.c.amiga): game.c and levels.c are unmodified; draw.c has ST port
  * blocks (cached text, rooms as scenery).  The sound effects and the MOD
  * loading below are main.c's, on the C ptplayer (../st_port/ptplayer) on
- * the Paula emulation (STE DMA sound).  The original's music,
- * axelf.mod, is not included (a cover of a commercial track); a
- * ProTracker module copied next to the program as AXELF.MOD is played.
+ * the Paula emulation (STE DMA sound).  No music is included (the
+ * Amiga version's MOD is a cover of a commercial track); a ProTracker
+ * module of your own copied next to the program as MUSIC.MOD is played.
  *
  * main.c's state machine runs once per 50 Hz VBL (as on the Amiga), the
  * drawing once per frame:
@@ -83,7 +83,7 @@ static GameState gs;
 static UWORD palette[16] = {
     0x001,  /*  0: near-black (BG) */
     0xFFF,  /*  1: white */
-    0xE40,  /*  2: orange-red (hunter suit) */
+    0x0A9,  /*  2: teal (hunter suit) */
     0xFC0,  /*  3: yellow (suit detail/visor) */
     0x141,  /*  4: dark green (cavern rock) */
     0x262,  /*  5: medium green */
@@ -520,9 +520,9 @@ int main(void)
         log_line("no DMA sound - continuing without sound", 0, 0, 0, 0);
 
     /* Load MOD music */
-    mod_data = load_file_to_chip("DH2:Dev/axelf.mod", &mod_size);
+    mod_data = load_file_to_chip("DH2:Dev/music.mod", &mod_size);
     if (mod_data) {
-        AB_I("Loaded axelf.mod (%ld bytes)", (long)mod_size);
+        AB_I("Loaded music.mod (%ld bytes)", (long)mod_size);
         if (validate_mod(mod_data, mod_size)) {
             /* Install CIA timer for music playback only after validation
                succeeds - otherwise mt_init on a malformed file could walk
@@ -532,13 +532,13 @@ int main(void)
             mt_Enable = 1;
             music_playing = 1;
         } else {
-            AB_W("axelf.mod failed validation - no music");
+            AB_W("music.mod failed validation - no music");
             FreeMem(mod_data, mod_size);
             mod_data = NULL;
             mod_size = 0;
         }
     } else {
-        AB_W("Could not load axelf.mod - no music");
+        AB_W("Could not load music.mod - no music");
     }
 
     /* Generate world data first */

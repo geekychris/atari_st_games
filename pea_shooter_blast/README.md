@@ -27,7 +27,7 @@ Controls, as on the Amiga:
 
 ## Music
 
-The Amiga version plays `music.mod`, a cover of a commercial game's soundtrack, so it is **not included** here. Copy any 4-channel ProTracker module to `build/MUSIC.MOD`, and the port validates and plays it as the original does, on the C ptplayer (`../st_port/ptplayer`), with the sound effects on the other channels. Without it, the game plays its sound effects only.
+The music is `music.mod`, "Pea Patrol", an original upbeat march made by `../tools/modgen/pea_shooter_blast.py` (the Amiga version's earlier MOD was a cover of a commercial game's soundtrack, and was replaced). The Makefile copies it to `build/MUSIC.MOD`; the port validates and plays it as the original does, on the C ptplayer (`../st_port/ptplayer`), with the sound effects on the other channels.
 
 ## What changed
 

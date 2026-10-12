@@ -8,7 +8,7 @@
  * main.c.amiga): game.c, draw.c, sound.c and score.c are unmodified and
  * run on the shared ST layer in ../st_port.  sound.c drives the C
  * ptplayer (ProTracker replay + sound effects) on the Paula emulation,
- * so the original MOD music plays on the STE's DMA sound; score.c reads
+ * so the MOD music (an original tune, ../tools/modgen) plays on the STE's DMA sound; score.c reads
  * and writes its table through the AmigaDOS shim (ORBITAL_.SCO).
  *
  * This file replaces the AmigaOS parts of main.c (screen, IDCMP, input

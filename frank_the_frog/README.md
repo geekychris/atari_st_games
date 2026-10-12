@@ -8,7 +8,7 @@ commit in `.upstream-commit`), built on the shared ST layer in `../st_port`.
 
 <table><tr>
 <td align="center"><img src="docs/title.png" width="320" alt="Title"><br>Title</td>
-<td align="center"><img src="docs/playfield.png" width="320" alt="Road, river and homes"><br>Road, river and homes</td>
+<td align="center"><img src="docs/playfield.png" width="320" alt="Road, river and the home ponds"><br>Road, river and the home ponds</td>
 </tr></table>
 
 Captured through the agent API (`/screen`, 2x).
@@ -26,7 +26,7 @@ toggles music. Esc quits.
 | | |
 |---|---|
 | `frank.c`, `playfield.c`, `score.c` | **Unmodified.** They compile against the Amiga header shims in `../st_port/compat` (`exec/types.h`, `graphics/rastport.h`, `proto/graphics.h` → `st_gfx`). |
-| `lanes.c` | Unmodified logic. Under `__MINT__`: lane objects are drawn from a cache of pre-shifted sprites built by the original draw functions. Logs/turtles are pre-composited onto water (opaque copies). Home frogs are drawn separately. |
+| `lanes.c` | Unmodified logic. Under `__MINT__`: lane objects are drawn from a cache of pre-shifted sprites built by the original draw functions. Logs and lily-pad rafts are pre-composited onto water (opaque copies). Frogs in the home ponds are drawn separately. |
 | `main_st.c` | The original `main.c` state machine and title/overlay drawing, with ST input (latched key/joystick presses), layered rendering and NatFeats `FROG` events. |
 | `st_modplay.c` | The original generated heavy-metal track: pattern generator and song order copied verbatim, replayed on the YM2149 (guitar → A, bass → B, drums → C; the harmony channel is dropped). |
 | `st_sound.c` | Hop/splat/splash/home/level/game-over effects synthesised on YM channel C, interrupting the drums like the Amiga version steals Paula channel 3. |

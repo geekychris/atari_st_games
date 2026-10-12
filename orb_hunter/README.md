@@ -1,6 +1,6 @@
 # Orb Hunter: Atari STE port
 
-Port of Orb Hunter, the Metroid-style exploration platformer in
+Port of Orb Hunter, the cavern exploration platformer in
 [geekychris/amiga_games](https://github.com/geekychris/amiga_games) (`orb_hunter/`,
 commit in `.upstream-commit`), built on the shared ST layer in `../st_port`.
 
@@ -29,7 +29,7 @@ Controls, as on the Amiga:
 
 ## Music
 
-The Amiga version plays `axelf.mod`, a cover of a commercial track, so it is **not included**. Copy any 4-channel ProTracker module to `build/AXELF.MOD`; the original loader validates and plays it. Without it, the game plays its sound effects only.
+No music is included: the Amiga version's MOD is a cover of a commercial track. Copy a 4-channel ProTracker module of your own to `build/MUSIC.MOD`; the original loader validates and plays it. Without it, the game plays its sound effects only.
 
 ## What changed
 

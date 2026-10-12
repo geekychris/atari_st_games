@@ -537,15 +537,15 @@ int main(void)
     build_sfx();
 
     /* Load MOD music from install-relative path (PROGDIR: = binary's dir). */
-    mod_data = load_file_to_chip("PROGDIR:axelf.mod", &mod_size);
+    mod_data = load_file_to_chip("PROGDIR:rock_blaster.mod", &mod_size);
     if (mod_data) {
         if (!validate_mod(mod_data, mod_size)) {
-            AB_W("axelf.mod failed validation - not installing");
+            AB_W("rock_blaster.mod failed validation - not installing");
             FreeMem(mod_data, mod_size);
             mod_data = NULL;
             mod_size = 0;
         } else {
-            AB_I("Loaded axelf.mod (%ld bytes)", (long)mod_size);
+            AB_I("Loaded rock_blaster.mod (%ld bytes)", (long)mod_size);
             /* Install CIA timer for music playback */
             mt_install_cia(CUSTOM_BASE, NULL, 1); /* PAL */
             mt_init(CUSTOM_BASE, mod_data, NULL, 0);
@@ -555,7 +555,7 @@ int main(void)
         }
     }
     if (!mod_data) {
-        AB_W("Could not load axelf.mod - no music");
+        AB_W("Could not load rock_blaster.mod - no music");
     }
 
     /* Init game */

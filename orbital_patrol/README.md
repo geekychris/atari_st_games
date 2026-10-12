@@ -1,6 +1,6 @@
 # Orbital Patrol: Atari STE port
 
-Port of Orbital Patrol, the Defender-style shooter in
+Port of Orbital Patrol, the side-scrolling planet defence shooter in
 [geekychris/amiga_games](https://github.com/geekychris/amiga_games) (`orbital_patrol/`,
 commit in `.upstream-commit`), built on the shared ST layer in `../st_port`.
 
@@ -33,7 +33,7 @@ Controls, as on the Amiga:
 | | |
 |---|---|
 | `game.c`, `sound.c`, `score.c`, all headers except one line of `game.h` | **Unmodified.** `game.h` declares the Amiga libnix `sprintf`, which returns `char *`; under `__MINT__` it includes `<stdio.h>` instead. |
-| `sound.c` | Runs unchanged on the C ptplayer (`../st_port/ptplayer`) on the Paula emulation, so **the original MOD music plays** on the STE's DMA sound (mixed at 6258 Hz), along with the procedural sound effects. It loads the MOD and the high-score table through the AmigaDOS shim (`../st_port/amiga_dos.c`): `PROGDIR:orbital_patrol.scores` becomes `ORBITAL_.SCO`. |
+| `sound.c` | Runs unchanged on the C ptplayer (`../st_port/ptplayer`) on the Paula emulation, so **the MOD music plays** ("Patrol Drive", an original tune made by `../tools/modgen/orbital_patrol.py`) on the STE's DMA sound (mixed at 6258 Hz), along with the procedural sound effects. It loads the MOD and the high-score table through the AmigaDOS shim (`../st_port/amiga_dos.c`): `PROGDIR:orbital_patrol.scores` becomes `ORBITAL_.SCO`. |
 | `draw.c` | Original drawing code, with `ST port:` changes listed below. |
 | `main_st.c` | `main.c`'s state machine (kept as `main.c.amiga`), split into a 50 Hz logic step and a per-frame draw, so the game keeps the Amiga's speed when a frame takes several VBLs. |
 | `st_input.c` | The same key map and edge-triggered bomb and hyperspace, from the IKBD handler and joystick 1. |

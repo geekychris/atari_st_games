@@ -95,7 +95,7 @@ static GameState gs;
 static UWORD palette[16] = {
     0x001,  /*  0: near-black (BG) */
     0xFFF,  /*  1: white */
-    0xE40,  /*  2: orange-red (hunter suit) */
+    0x0A9,  /*  2: teal (hunter suit) */
     0xFC0,  /*  3: yellow (suit detail/visor) */
     0x141,  /*  4: dark green (cavern rock) */
     0x262,  /*  5: medium green */
@@ -617,9 +617,9 @@ int main(void)
     build_sfx();
 
     /* Load MOD music */
-    mod_data = load_file_to_chip("DH2:Dev/axelf.mod", &mod_size);
+    mod_data = load_file_to_chip("DH2:Dev/rock_blaster.mod", &mod_size);
     if (mod_data) {
-        AB_I("Loaded axelf.mod (%ld bytes)", (long)mod_size);
+        AB_I("Loaded rock_blaster.mod (%ld bytes)", (long)mod_size);
         if (validate_mod(mod_data, mod_size)) {
             /* Install CIA timer for music playback only after validation
                succeeds - otherwise mt_init on a malformed file could walk
@@ -630,13 +630,13 @@ int main(void)
             mt_Enable = 1;
             music_playing = 1;
         } else {
-            AB_W("axelf.mod failed validation - no music");
+            AB_W("rock_blaster.mod failed validation - no music");
             FreeMem(mod_data, mod_size);
             mod_data = NULL;
             mod_size = 0;
         }
     } else {
-        AB_W("Could not load axelf.mod - no music");
+        AB_W("Could not load rock_blaster.mod - no music");
     }
 
     /* Generate world data first */

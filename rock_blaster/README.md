@@ -44,7 +44,7 @@ Controls, the same as on the Amiga:
 
 The sound effects play through the C ptplayer on the Paula emulation, so on STE DMA sound. A plain ST has no DMA sound, so the port is silent there.
 
-The Amiga game also loads `axelf.mod` for music. That file is not a valid ProTracker module (it has no `M.K.` tag), so the original's own validation rejects it and the game plays effects only. The port does the same and doesn't ship the file.
+The Amiga game also plays a MOD (`rock_blaster.mod`, an original tune; the file it used to load was a cover of a commercial track, and invalid anyway). The port plays effects only and doesn't ship it.
 
 ## Performance
 

@@ -28,17 +28,24 @@ Controls, as on the Amiga:
 
 ## Music and voice clips
 
-The original's music (`party.mod`, `birthday.mod`) and its four arcade-cabinet voice clips are **not included**: they are third-party tracker modules and samples of unknown licence. The game runs without them, with its synthesized sound effects. For personal use, copy them from an amiga_games checkout:
+The music and the arcade-cabinet voice clips are included and copied into
+`build/` by the Makefile, under 8.3 names:
 
-```sh
-make assets UPSTREAM=path/to/amiga_games   # -> build/PARTY.MOD, BIRTHDAY.MOD, SND_ARC1..4.RAW
-```
+| File | In `build/` | What it is |
+|---|---|---|
+| `party.mod` | `PARTY.MOD` | "Party Time", an original upbeat tune |
+| `birthday.mod` | `BIRTHDAY.MOD` | "Happy Birthday to You" (public domain), an original waltz arrangement |
+| `snd_arcade1..4.raw` | `SND_ARC1..4.RAW` | "Game on!", "Ready, player!", "High score!", "Level up!" in synthetic speech; the speech bubble shows the words of the clip that plays |
+
+They are made by `../tools/modgen` (`rj_party.py`, `rj_birthday.py`,
+`arcade_voices.py`). The earlier versions of these files were third-party
+tracker modules and arcade samples, and were replaced.
 
 ## What changed
 
 | | |
 |---|---|
-| `game.c`, `rooms.c`, `game.h`, `rj_sprite.h`, `guests.txt` | **Unmodified.** The guest list and high scores load and save through the AmigaDOS shim, as `GUESTS.TXT` and `HISCORES.DAT` next to the program. |
+| `game.c`, `rooms.c`, `game.h`, `rj_sprite.h`, `guests.txt` | **Unmodified** (as in the 3DO version: the speech bubble matches the voice clip). The guest list and high scores load and save through the AmigaDOS shim, as `GUESTS.TXT` and `HISCORES.DAT` next to the program. |
 | `sound.c` | `ST port:` blocks: `CUSTOM_BASE` points ptplayer at the Paula emulation, and the voice clips get distinct 8.3 names. `snd_arcade1..4.raw` would all shorten to `SND_ARCA.RAW`. |
 | `draw.c` | One `ST port:` block: the RJ head, drawn as hundreds of `RectFill` runs, is one cached operation on the HUD layer. |
 | `main_st.c` | `main.c`'s loop (kept as `main.c.amiga`), with game logic once per 50 Hz VBL and the drawing once per frame. The music switching between the party and birthday modules is copied verbatim. |
@@ -51,7 +58,7 @@ make assets UPSTREAM=path/to/amiga_games   # -> build/PARTY.MOD, BIRTHDAY.MOD, S
 
 ## Performance
 
-**About 13–18 fps on an 8 MHz STE** in the party, with game logic at 50 Hz. Mixing the MOD music takes about 30% of the CPU when it's present, the blit about 15%.
+**About 13–18 fps on an 8 MHz STE** in the party, with game logic at 50 Hz. Mixing the MOD music takes about 30% of the CPU, the blit about 15%.
 
 ## Agent hooks
 

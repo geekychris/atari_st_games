@@ -382,19 +382,19 @@ static void place_items(void)
     g_items[i].type = ITEM_BOMBS;
     g_items[i].collected = 0; i++;
 
-    /* Long Beam - room (5,1) magma */
+    /* Far Shot - room (5,1) magma */
     g_items[i].room_x = 5; g_items[i].room_y = 1;
     g_items[i].tile_x = 10; g_items[i].tile_y = 11;
     g_items[i].type = ITEM_LONG_BEAM;
     g_items[i].collected = 0; i++;
 
-    /* Ice Beam - room (6,2) magma */
+    /* Frost Ray - room (6,2) magma */
     g_items[i].room_x = 6; g_items[i].room_y = 2;
     g_items[i].tile_x = 10; g_items[i].tile_y = 11;
     g_items[i].type = ITEM_ICE_BEAM;
     g_items[i].collected = 0; i++;
 
-    /* High Jump - room (3,3) near Beast */
+    /* Spring Boots - room (3,3) near Beast */
     g_items[i].room_x = 3; g_items[i].room_y = 3;
     g_items[i].tile_x = 5; g_items[i].tile_y = 12;
     g_items[i].type = ITEM_HIGH_JUMP;
@@ -412,25 +412,25 @@ static void place_items(void)
     g_items[i].type = ITEM_SPIN_STRIKE;
     g_items[i].collected = 0; i++;
 
-    /* Energy Tank 1 - room (1,1) cavern */
+    /* Power Cell 1 - room (1,1) cavern */
     g_items[i].room_x = 1; g_items[i].room_y = 1;
     g_items[i].tile_x = 10; g_items[i].tile_y = 5;
     g_items[i].type = ITEM_ENERGY_TANK;
     g_items[i].collected = 0; i++;
 
-    /* Energy Tank 2 - room (6,1) magma */
+    /* Power Cell 2 - room (6,1) magma */
     g_items[i].room_x = 6; g_items[i].room_y = 1;
     g_items[i].tile_x = 5; g_items[i].tile_y = 11;
     g_items[i].type = ITEM_ENERGY_TANK;
     g_items[i].collected = 0; i++;
 
-    /* Energy Tank 3 - room (4,4) citadel */
+    /* Power Cell 3 - room (4,4) citadel */
     g_items[i].room_x = 4; g_items[i].room_y = 4;
     g_items[i].tile_x = 10; g_items[i].tile_y = 10;
     g_items[i].type = ITEM_ENERGY_TANK;
     g_items[i].collected = 0; i++;
 
-    /* Extra missile packs */
+    /* Extra rocket packs */
     g_items[i].room_x = 1; g_items[i].room_y = 3;
     g_items[i].tile_x = 5; g_items[i].tile_y = 12;
     g_items[i].type = ITEM_MISSILE_PACK;

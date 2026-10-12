@@ -20,7 +20,8 @@ sys.path.insert(0, os.path.join(os.environ.get("HATARI_DIR") or os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "..", "..", "hatari_augmented"), "tools", "agent"))
 from hatari_agent import Hatari, HatariError  # noqa: E402
 
-ROWS, COLS, CELL_W, CELL_H, ALIEN_W = 5, 11, 24, 16, 12  # collision box
+ROWS, COLS, CELL_W, CELL_H, ALIEN_W = 6, 8, 24, 15, 14  # collision box
+ROW_SHIFT = CELL_W // 2  # odd rows sit half a cell to the right
 PLAYER_W, PLAYER_Y = 15, 232
 STATES = ["TITLE", "PLAYING", "DYING", "GAMEOVER", "WAVE_CLEAR"]
 
@@ -65,7 +66,8 @@ def decide(s):
     for c in range(COLS):
         for r in range(ROWS - 1, -1, -1):
             if s["alive"][r][c]:
-                ax = s["gx"] + c * CELL_W + ALIEN_W // 2 + s["dir"] * 3   # small lead
+                ax = (s["gx"] + c * CELL_W + (ROW_SHIFT if r & 1 else 0) +
+                      ALIEN_W // 2 + s["dir"] * 3)   # small lead
                 targets.append((abs(ax - pc), ax))
                 break
     move, fire = 0, False

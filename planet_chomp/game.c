@@ -3,7 +3,7 @@
 
 /*
  * Planet Chomp rules, from the Unity sources: GameDirector.cs (states,
- * scoring, keys, levels, scatter/chase clock), Ghost.cs (the arcade ghost
+ * scoring, keys, levels, scatter/chase clock), Ghost.cs (the chasers'
  * brain on a sphere), Chomper.cs (buffered screen-relative steering) and
  * Mover.cs (rail movement). Times are 50 Hz ticks; positions fixed point.
  */
@@ -13,7 +13,7 @@
 #include "bridge_client.h"
 
 Game g;
-const char *ghost_name[4] = { "BLAZE", "PETAL", "FROST", "EMBER" };
+const char *ghost_name[4] = { "GLOOM", "SPARK", "MIST", "MOSS" };
 
 #define START_LIVES   3
 #define EXTRA_LIFE_AT 10000
@@ -244,7 +244,7 @@ static void player_arrived(void *ctx, int c)
         g.crumb[c] = 0;
         g.crumbs_left--;
         add_score(10);
-        sfx_waka();
+        sfx_crumb();
         if (g.crumbs_left % 10 == 0)
             AB_I("chomp score=%ld left=%ld", g.score, (long)g.crumbs_left);
         if (g.crumbs_left == 0) {

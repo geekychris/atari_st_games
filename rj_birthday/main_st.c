@@ -11,11 +11,10 @@
  * list and high scores load and save through the AmigaDOS shim
  * (GUESTS.TXT, HISCORES.DAT next to the program).
  *
- * The original's two MOD files and four arcade voice clips are not
- * included (third-party tracker modules and samples of unknown
- * licence); copied next to the program as PARTY.MOD, BIRTHDAY.MOD and
- * SND_ARC1..4.RAW (make assets UPSTREAM=<amiga_games checkout>), they
- * are used as on the Amiga.
+ * The two MOD files and four arcade voice clips (original music, "Happy
+ * Birthday to You" and synthetic speech, made by tools/modgen in
+ * geekychris/3do-dev) are copied next to the program by the Makefile as
+ * PARTY.MOD, BIRTHDAY.MOD and SND_ARC1..4.RAW, and used as on the Amiga.
  *
  * main.c's loop body runs once per 50 Hz VBL (as on the Amiga), the
  * drawing once per frame:

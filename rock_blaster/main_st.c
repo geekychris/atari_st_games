@@ -11,9 +11,8 @@
  * effects below are copied from it verbatim and play through the C
  * ptplayer on the Paula emulation (STE DMA sound; silent on a plain ST).
  *
- * The Amiga game loads axelf.mod for music, but that file is not a valid
- * ProTracker module (no M.K. tag), so the original rejects it and plays
- * sound effects only; so does this port.
+ * The Amiga game also plays a MOD (rock_blaster.mod); this port plays
+ * the sound effects only.
  *
  * Layers: title page as scenery, score/lives/game over as HUD, rocks,
  * ship, bullets and particles as sprites redrawn every frame.

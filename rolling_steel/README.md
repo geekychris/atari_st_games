@@ -16,7 +16,7 @@ manages 3.5–4.8 fps, still too slow to play. An emulated CT60-style Falcon
 
 <table><tr>
 <td align="center"><img src="docs/title.png" width="320" alt="Title"><br>Title (demo behind)</td>
-<td align="center"><img src="docs/play.png" width="320" alt="Practice course"><br>Practice course</td>
+<td align="center"><img src="docs/play.png" width="320" alt="The first course, Warm-up"><br>The first course, Warm-up</td>
 </tr></table>
 
 Captured through the agent API (`/screen`, 2x).
@@ -45,7 +45,7 @@ Controls, as on the Amiga:
 | `render.c` | Under `__MINT__`: one far-to-near pass in the fast mode. |
 | `main_68k.c` | Under `__MINT__`: draws into the screen in RGB565 (`sys_rgb565`, the pens converted), with a direct HUD text plotter. |
 | `amiga68k.h` | Declares `sys_modes`, `sys_mode`, `sys_mode_names`, `sys_rgb565` and `sys_cpu`. |
-| `data/` | The six courses, music themes and effects built by the 3DO version's tools (unchanged from upstream). |
+| `data/` | The six courses (WARM-UP, FIRST DROP, SWITCHBACK, SKYWAY, TOPSY-TURVY, THE GAUNTLET), music themes and effects, built by the 3DO version's tools. |
 
 ## Display modes (F)
 

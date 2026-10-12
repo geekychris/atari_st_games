@@ -185,6 +185,7 @@ int main(void)
     log_line("SYMBOL buggy 0x%06lx", (long)&gs.buggy, 0, 0, 0);
     log_line("SYMBOL state 0x%06lx", (long)&gs.state, 0, 0, 0);
     log_line("SYMBOL score 0x%06lx", (long)&gs.score, 0, 0, 0);
+    log_line("SYMBOL checkpoint_dist 0x%06lx", (long)&gs.checkpoint_dist, 0, 0, 0);
     log_line("SYMBOL frame_sync 0x%06lx", (long)gfx_swap, 0, 0, 0);
 
     last_vbl = FRCLOCK;

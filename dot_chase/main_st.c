@@ -38,22 +38,22 @@ static GameState gs;
 static WORD startup_delay = 30;
 
 static UWORD palette[16] = {
-    0x000,  /*  0: Black (bg) */
-    0xFF0,  /*  1: Yellow (dot-eater) */
-    0xF00,  /*  2: Red (Blinky) */
-    0xFBD,  /*  3: Pink (Pinky) */
-    0x0FF,  /*  4: Cyan (Inky) */
-    0xF80,  /*  5: Orange (Clyde) */
-    0x22F,  /*  6: Blue (walls/frightened ghost) */
-    0xFFF,  /*  7: White (text) */
-    0x118,  /*  8: Dark blue (maze outline) */
-    0xFDA,  /*  9: Peach (ghost face) */
-    0xF9B,  /* 10: Dark pink */
-    0xA00,  /* 11: Dark red */
-    0x0F0,  /* 12: Green */
-    0xA0F,  /* 13: Purple */
-    0x888,  /* 14: Gray */
-    0xEED,  /* 15: Cream (dots) */
+    0x211,  /*  0: dark soil (bg) */
+    0xE22,  /*  1: ladybug red */
+    0xA5E,  /*  2: Webster, purple */
+    0x8AD,  /*  3: Silk, steel blue */
+    0xB73,  /*  4: Tangle, brown */
+    0xDDB,  /*  5: Nibs, bone */
+    0x283,  /*  6: hedge */
+    0xFFF,  /*  7: white (text) */
+    0x152,  /*  8: hedge shadow */
+    0x4B4,  /*  9: hedge leaves */
+    0xFC2,  /* 10: gold */
+    0x000,  /* 11: black (spots, legs) */
+    0x7D4,  /* 12: leaf green */
+    0x82C,  /* 13: plum */
+    0x999,  /* 14: gray */
+    0xDB8,  /* 15: seed */
 };
 
 static void log_line(const char *fmt, long a, long b, long c, long d)
@@ -68,7 +68,7 @@ static void log_line(const char *fmt, long a, long b, long c, long d)
 static const char *state_name(int s)
 {
     static const char *n[] = { "TITLE", "READY", "PLAYING", "DYING", "GAMEOVER",
-                               "LEVEL_DONE", "EAT_GHOST" };
+                               "LEVEL_DONE", "CAUGHT_SPIDER" };
     return s >= 0 && s < 7 ? n[s] : "?";
 }
 
@@ -109,17 +109,17 @@ static int game_step(void)
     }
 
     /* Handle sound events */
-    if (gs.ev_flags & EV_CHOMP)     sound_chomp();
-    if (gs.ev_flags & EV_EAT_GHOST) sound_eat_ghost();
+    if (gs.ev_flags & EV_SEED)      sound_seed();
+    if (gs.ev_flags & EV_EAT_SPIDER) sound_eat_spider();
     if (gs.ev_flags & EV_DIE)       sound_die();
-    if (gs.ev_flags & EV_FRUIT)     sound_fruit();
+    if (gs.ev_flags & EV_BONUS)     sound_bonus();
     if (gs.ev_flags & EV_EXTRA)     sound_extra_life();
     if (gs.ev_flags & EV_POWER)     sound_power();
     gs.ev_flags = 0;
 
-    /* Siren + frightened-drone control. Track prior fright state
+    /* Crickets + frightened-drone control. Track prior fright state
      * so we shut off the power drone (channel 3) on the transition
-     * out of frightened mode, letting the siren resume cleanly. */
+     * out of frightened mode, letting the crickets resume cleanly. */
     {
         static WORD prev_fright = 0;
         WORD fright_now = gs.fright_active ? 1 : 0;
@@ -130,12 +130,12 @@ static int game_step(void)
     }
     if (gs.state == STATE_PLAYING) {
         if (gs.fright_active) {
-            sound_siren_off();
+            sound_pulse_off();
         } else {
-            sound_set_siren(gs.siren_speed);
+            sound_set_pulse(gs.pulse_speed);
         }
     } else {
-        sound_siren_off();
+        sound_pulse_off();
         sound_power_off();
     }
 
@@ -174,8 +174,8 @@ int main(void)
     log_line("START", 0, 0, 0, 0);
     log_line("SYMBOL gs 0x%06lx", (long)&gs, 0, 0, 0);
     log_line("SYMBOL maze 0x%06lx", (long)&gs.maze, 0, 0, 0);
-    log_line("SYMBOL muncher 0x%06lx", (long)&gs.muncher, 0, 0, 0);
-    log_line("SYMBOL ghosts 0x%06lx", (long)&gs.ghosts, 0, 0, 0);
+    log_line("SYMBOL hero 0x%06lx", (long)&gs.hero, 0, 0, 0);
+    log_line("SYMBOL spiders 0x%06lx", (long)&gs.spiders, 0, 0, 0);
     log_line("SYMBOL state 0x%06lx", (long)&gs.state, 0, 0, 0);
     log_line("SYMBOL score 0x%06lx", (long)&gs.score, 0, 0, 0);
     log_line("SYMBOL frame_sync 0x%06lx", (long)gfx_swap, 0, 0, 0);

@@ -43,11 +43,13 @@
 
 unsigned long __stack = 65536;
 
-enum { P_WHITE = 1, P_DIM, P_YELLOW, P_GOLD, P_RED, P_PINK, P_CYAN, P_ORANGE, P_RING, P_RINGDIM,
-       P_FRIGHT, P_EYES, P_BAR_BG, P_COUNT };
+enum { P_WHITE = 1, P_DIM, P_YELLOW, P_GOLD, P_RED, P_SP1, P_SP2, P_SP3, P_SP4, P_RING, P_RINGDIM,
+       P_FRIGHT, P_EYES, P_BAR_BG, P_HERO, P_POPUP, P_COUNT };
 static const ULONG pen_rgb[P_COUNT] = {
-    0x000000, 0xF0F4FF, 0x98A0C0, 0xFFD838, 0xFFB828, 0xFF4C40, 0xFF8CD8, 0x60F0FF,
-    0xFFA640, 0x5080FF, 0x284080, 0x3048FF, 0xC0C0D0, 0x101828
+    0x000000, 0xF0F4FF, 0x98A0C0, 0xFFD838, 0xFFB828, 0xFF4C40,
+    0xAA50FF, 0xF0DC3C, 0xD2D2E6, 0x28C8AA,     /* the spooks, as in sprites.c */
+    0x5080FF, 0x284080, 0x8890A8, 0xC0C0D0, 0x101828,
+    0x8CE63C, 0xFFFFFF                          /* chomper, score popups */
 };
 
 /* ---- the frame buffer the HUD draws into (logical 320 x 256 coordinates) ---- */
@@ -193,14 +195,14 @@ static void radar(void)
     ring(cx, cy, (rad + 4) / 2, P_RINGDIM);
     for (i = 0; i < 4; i++)
         if (g.key[mz_keys[i]]) radar_dot(p, mz_dir[mz_keys[i]], cr, cu, cx, cy, rad, 2, P_GOLD);
-    radar_dot(p, mz_dir[mz_nest], cr, cu, cx, cy, rad, 2, P_PINK);
+    radar_dot(p, mz_dir[mz_nest], cr, cu, cx, cy, rad, 2, P_DIM);
     for (i = 0; i < 4; i++) {
-        static const int tint[4] = { P_RED, P_PINK, P_CYAN, P_ORANGE };
+        static const int tint[4] = { P_SP1, P_SP2, P_SP3, P_SP4 };
         Ghost *gh = &g.ghost[i];
         int pen = gh->mode == GM_EATEN ? P_EYES : gh->fright ? P_FRIGHT : tint[i];
         radar_dot(p, mover_dir(&gh->mv), cr, cu, cx, cy, rad, 2, pen);
     }
-    disc(cx, cy, 2, P_YELLOW);
+    disc(cx, cy, 2, P_HERO);
     text(cx - 20, cy - rad - 16, "RADAR", P_DIM);
 }
 
@@ -277,7 +279,7 @@ static void hud_play(void)
     sprintf(buf, "CRUMBS %ld", (long)g.crumbs_left);
     text(312 - 8 * (int)strlen(buf), 14, buf, P_DIM);
     lives = g.lives - ((g.state == GS_READY || g.state == GS_PLAYING) ? 1 : 0);
-    for (i = 0; i < lives && i < 8; i++) disc(14 + i * 14, 244, 5, P_YELLOW);
+    for (i = 0; i < lives && i < 8; i++) disc(14 + i * 14, 244, 5, P_HERO);
     if (g.power_left > 0) {
         int w = (int)(160 * g.power_left / (g.power_total ? g.power_total : 1));
         int blink = g.power_left < TICKS(2) && (g.power_left % 20) < 10;
@@ -291,7 +293,7 @@ static void hud_play(void)
         long x, y;
         if (g.popup[i].age < 0 || !rd_project(g.popup[i].world, &x, &y)) continue;
         sprintf(buf, "%ld", (long)g.popup[i].pts);
-        text((int)(x >> 16) - 4 * (int)strlen(buf), (int)(((y >> 16) * 16) / 15) - 10 - g.popup[i].age / 2, buf, P_CYAN);
+        text((int)(x >> 16) - 4 * (int)strlen(buf), (int)(((y >> 16) * 16) / 15) - 10 - g.popup[i].age / 2, buf, P_POPUP);
     }
     switch (g.state) {
     case GS_READY:
@@ -310,9 +312,9 @@ static void hud_title(void)
 {
     char buf[40];
     int i;
-    static const int tint[4] = { P_RED, P_PINK, P_CYAN, P_ORANGE };
+    static const int tint[4] = { P_SP1, P_SP2, P_SP3, P_SP4 };
     big(34, "PLANET CHOMP", 3, P_YELLOW);
-    ctext(64, "A PAC-MAN HOMAGE ON A VERY SMALL WORLD", P_DIM);
+    ctext(64, "A MAZE THAT WRAPS ALL THE WAY ROUND", P_DIM);
     for (i = 0; i < 4; i++) {
         int x = 28 + i * 72;
         disc(x, 92, 5, tint[i]);

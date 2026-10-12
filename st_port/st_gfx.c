@@ -1393,6 +1393,104 @@ void gfx_or16_row(struct RastPort *rp, const WORD *xs, int n, WORD y,
 		mark(rp, xmin, ymin, xmax + 15, ymax);
 }
 
+/* gfx_or16_row() for a multicolour sprite: pm[p][r] is the mask for
+ * bit plane p (an all zero plane is skipped), e.g. built from per colour
+ * masks by OR-ing each colour's mask into the planes of its pen */
+void gfx_or16_row_planes(struct RastPort *rp, const WORD *xs, int n, WORD y,
+                         const UWORD (*pm)[16], int h)
+{
+	UWORD off[16], mask[4][16];
+	UWORD hi[2][4][16], lo[2][4][16];
+	int shifts[2] = { -1, -1 };
+	int nr = 0, last = -1, pl[4], np = 0;
+	int ymin = SCR_H, ymax = -1, xmin = SCR_W, xmax = -1;
+
+	for (int p = 0; p < 4; p++)
+	{
+		int any = 0;
+		for (int r = 0; r < h && r < 16; r++)
+			any |= pm[p][r];
+		if (any)
+			pl[np++] = p;
+	}
+	if (!np)
+		return;
+	/* distinct physical rows (rows mapping to the same line are merged) */
+	for (int r = 0; r < h && r < 16; r++)
+	{
+		int py = map_y(y + r);
+		if ((unsigned)py >= SCR_H)
+			continue;
+		if (py == last)
+			for (int j = 0; j < np; j++)
+				mask[j][nr - 1] |= pm[pl[j]][r];
+		else
+		{
+			off[nr] = row_off[py];
+			for (int j = 0; j < np; j++)
+				mask[j][nr] = pm[pl[j]][r];
+			nr++;
+			last = py;
+			if (py < ymin) ymin = py;
+			ymax = py;
+		}
+	}
+	if (!nr)
+		return;
+	/* per plane, only its non-empty rows (an accent colour on its own
+	 * plane is a few pixels) */
+	UWORD poff[4][16];
+	int pn[4];
+	for (int j = 0; j < np; j++)
+	{
+		pn[j] = 0;
+		for (int r = 0; r < nr; r++)
+			if (mask[j][r])
+			{
+				poff[j][pn[j]] = off[r] + pl[j];
+				mask[j][pn[j]++] = mask[j][r];
+			}
+	}
+
+	for (int i = 0; i < n; i++)
+	{
+		int x = xs[i];
+		if (x < 0 || x > SCR_W - 16)
+			continue;
+		int sh = x & 15, k;
+		/* sprites at a fixed spacing only use a couple of shifts */
+		if (shifts[0] == sh) k = 0;
+		else if (shifts[1] == sh) k = 1;
+		else
+		{
+			k = shifts[0] < 0 ? 0 : 1;
+			shifts[k] = sh;
+			for (int j = 0; j < np; j++)
+				for (int r = 0; r < pn[j]; r++)
+				{
+					ULONG m = (ULONG)mask[j][r] << (16 - sh);
+					hi[k][j][r] = m >> 16;
+					lo[k][j][r] = m;
+				}
+		}
+		if (x < xmin) xmin = x;
+		if (x > xmax) xmax = x;
+		UWORD *base = rp->base + ((x >> 4) << 2);
+		for (int j = 0; j < np; j++)
+		{
+			const UWORD *h1 = hi[k][j], *l1 = lo[k][j], *po = poff[j];
+			for (int r = pn[j]; r > 0; r--)
+			{
+				UWORD *q = base + *po++;
+				q[0] |= *h1++;
+				q[4] |= *l1++;
+			}
+		}
+	}
+	if (xmax >= 0)
+		mark(rp, xmin, ymin, xmax + 15, ymax);
+}
+
 void gfx_mark(struct RastPort *rp, WORD x0, WORD y0, WORD x1, WORD y1)
 {
 	int py0 = map_y(y0), py1 = map_y(y1);

@@ -1,6 +1,6 @@
 # Lunar Rider: Atari STE port
 
-Port of Lunar Rider, the Moon Patrol-style buggy game in
+Port of Lunar Rider, the moon buggy game in
 [geekychris/amiga_games](https://github.com/geekychris/amiga_games) (`lunar_rider/`,
 commit in `.upstream-commit`), built on the shared ST layer in `../st_port`.
 
@@ -9,7 +9,7 @@ commit in `.upstream-commit`), built on the shared ST layer in `../st_port`.
 <table><tr>
 <td align="center"><img src="docs/title.png" width="320" alt="Title"><br>Title</td>
 <td align="center"><img src="docs/ride.png" width="320" alt="Parallax mountains and craters"><br>Parallax mountains and craters</td>
-<td align="center"><img src="docs/checkpoint_b.png" width="320" alt="Past checkpoint B"><br>Past checkpoint B</td>
+<td align="center"><img src="docs/checkpoint.png" width="320" alt="Reaching zone 2"><br>Reaching zone 2</td>
 </tr></table>
 
 Captured through the agent API (`/screen`, 2x).
@@ -31,7 +31,7 @@ Controls, as on the Amiga:
 |---|---|
 | `game.c`, all headers | **Unmodified.** |
 | `sound.c` | Unmodified except for one `ST port:` block: the two dummy CIA reads between stopping and restarting a channel are skipped (there is no CIA at `$BFE001` on the ST; the access is a bus error). It drives the Paula registers directly, so it is built as C++ (`sound_st.cpp`) against the Paula emulation, which plays on STE DMA sound at 6258 Hz. |
-| `draw.c` | Original drawing code, with `ST port:` changes listed below. |
+| `draw.c` | Original drawing code, with `ST port:` changes listed below. Checkpoints are numbered zones (`ZONE 02`), as in the 3DO and Amiga versions. |
 | `main_st.c` | `main.c`'s state machine (kept as `main.c.amiga`), split into a 50 Hz logic step and a per-frame draw. |
 | `st_input.c` | The same key map, from the IKBD handler and joystick 1. |
 
@@ -50,4 +50,4 @@ The game runs at **about 10–11 fps on an 8 MHz STE**, with game logic at 50 Hz
 
 ## Agent hooks
 
-The game logs `LUNAR SYMBOL ...` lines with addresses for `gs`, `buggy`, `state`, `score` and `frame_sync`. It also logs `LUNAR STATE`, `LUNAR SCORE` and `LUNAR PERF` events.
+The game logs `LUNAR SYMBOL ...` lines with addresses for `gs`, `buggy`, `state`, `score`, `checkpoint_dist` (write a small value to reach the next zone at once) and `frame_sync`. It also logs `LUNAR STATE`, `LUNAR SCORE` and `LUNAR PERF` events.

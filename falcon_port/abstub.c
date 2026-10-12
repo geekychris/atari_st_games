@@ -2,14 +2,14 @@
 // Copyright (c) 2026 Chris Collins <chris@hitorro.com>
 
 /* AmigaBridge log stub: AB_I/AB_W/AB_E lines to the host via NatFeats,
- * prefixed "<NAME> <level> " (agent API /console): FRACTALUS unless
+ * prefixed "<NAME> <level> " (agent API /console): CANYON unless
  * the program called ab_init("NAME"). */
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include "bridge_client.h"
 
-static char ab_name[16] = "FRACTALUS";
+static char ab_name[16] = "CANYON";
 
 int ab_init(const char *name)
 {

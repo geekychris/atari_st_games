@@ -1,6 +1,6 @@
 # Void Trader: Atari Falcon030 port
 
-Port of Void Trader, the Elite-style space trading and combat game in
+Port of Void Trader, the space trading and combat game in
 [geekychris/amiga_games](https://github.com/geekychris/amiga_games) (`void_trader/`,
 commit in `.upstream-commit`). The Amiga version is AGA, 256 colours. The port runs on the Falcon layer in `../falcon_port` (16-bit true colour) with the Paula emulation from `../st_port`.
 
@@ -8,7 +8,7 @@ commit in `.upstream-commit`). The Amiga version is AGA, 256 colours. The port r
 
 <table><tr>
 <td align="center"><img src="docs/title.png" width="320" alt="Title"><br>Title</td>
-<td align="center"><img src="docs/combat.png" width="320" alt="A pirate Krait in the sights"><br>A pirate Krait in the sights</td>
+<td align="center"><img src="docs/combat.png" width="320" alt="A pirate raider in the sights"><br>A pirate raider in the sights</td>
 </tr><tr>
 <td align="center"><img src="docs/station.png" width="320" alt="Station approach"><br>Station approach</td>
 <td align="center"><img src="docs/market.png" width="320" alt="Docked: station market"><br>Docked: station market</td>

@@ -1,6 +1,6 @@
 # Bullion Dash: Atari STE port
 
-Port of Bullion Dash, the Lode Runner-style puzzle platformer with a level editor, from
+Port of Bullion Dash, the gold-digging puzzle platformer with a level editor, from
 [geekychris/amiga_games](https://github.com/geekychris/amiga_games) (`bullion_dash/`,
 commit in `.upstream-commit`), built on the shared ST layer in `../st_port`.
 

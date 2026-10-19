@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/logo.png" alt="Atari ST Games logo" width="180">
+</p>
+
 # atari_st_games
 
 Atari ST / STE / Falcon030 ports of the games in

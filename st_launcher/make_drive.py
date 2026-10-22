@@ -146,6 +146,9 @@ def main():
     ap.add_argument("--run", action="store_true", help="start Hatari on the drive")
     ap.add_argument("--machine", default="ste", help="ste (default), megaste, falcon or falcon060")
     ap.add_argument("--no-sound", action="store_true")
+    ap.add_argument("--hatari-arg", action="append", default=[], metavar="ARG",
+                    help="with --run: extra Hatari option, e.g. --hatari-arg=--fullscreen "
+                         "(repeat for each word)")
     ap.add_argument("--no-watch", action="store_true",
                     help="with --run: start Hatari and return (no machine switching)")
     args = ap.parse_args()
@@ -203,6 +206,7 @@ def main():
         cmd += ["--natfeats", "on", "--harddrive", out, "--auto", "C:\\LAUNCHER.PRG"]
         if args.no_sound or not lch.sound:
             cmd += ["--sound", "off"]
+        cmd += args.hatari_arg
         tos = os.path.join(REPO, "roms/emutos/emutos-1024k-1.4/etos1024k.img")
         env = dict(os.environ, AGENT_TOS=tos, AGENT_PORT=str(lch.port))
         flag = os.path.join(out, "SWITCH.ON")

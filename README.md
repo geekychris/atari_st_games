@@ -105,7 +105,8 @@ Check it out next to this repo, or point `HATARI_DIR` at it:
 
 ```sh
 git clone https://github.com/geekychris/hatari_augmented ../hatari_augmented
-../hatari_augmented/tools/agent/fetch-cross-mint.sh     # once: cross compiler
+../hatari_augmented/tools/agent/fetch-cross-mint.sh     # once: cross compiler (x86-64: Rosetta on Apple Silicon, qemu on arm64 Linux;
+                                                        #   or build-cross-mint.sh for a native one)
 make -C rock_blaster run                                # Hatari + agent API, autostarts the game
 HATARI_DIR=~/src/hatari_augmented make -C canyon_rescue run
 python3 ../hatari_augmented/tools/games/launcher.py --ini games.ini   # host-side launcher

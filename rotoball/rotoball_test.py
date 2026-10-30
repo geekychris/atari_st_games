@@ -3,11 +3,12 @@
 # Copyright (c) 2026 Chris Collins <chris@hitorro.com>
 """Rotoball (Falcon port) test through the Hatari agent API.
 
-Resets the emulator (the game autostarts and the match starts at once, as
-on the Amiga), checks that W/A/S/D move the player's skimmer (its position
-read from emulated memory at the address the game logs), plays the whole
-90-second match through with fast-forward, checks the match-over line,
-quits with Esc and saves screenshots.
+Resets the emulator (the game autostarts on its kick-off screen), checks
+that play is frozen until SPACE starts the match, that W/A/S/D move the
+player's skimmer (its position read from emulated memory at the address
+the game logs), plays the rest of the match with fast-forward and checks
+that it lasts 90 emulated seconds, that play is frozen at full time, that
+SPACE starts a new match, and that Esc quits. Saves screenshots.
 
     make run            # in another shell (HATARI_API if not :7777)
     ./rotoball_test.py [outdir]
@@ -80,47 +81,75 @@ def hold(key, frames):
     run(2)
 
 
+def status_frame():
+    return call("/status")["frame"]
+
+
+def ball_pos(addr):
+    return struct.unpack(">ll", bytes.fromhex(call("/mem", addr=addr, len=8)["hex"]))
+
+
 # cold reset: Hatari autostarts the game again (make run set it up)
 boot = len(console())
 call("/emu/reset", "POST", type="cold")
-check("match starts (score=0:0)", wait_for("rotoball I score=0:0", 1800, boot))
-m = re.findall(r"rotoball I SYMBOL p1 0x([0-9a-f]+)", console()[boot:])
-p1 = int(m[-1], 16) if m else None
+check("kick-off screen (state=KICKOFF)", wait_for("rotoball I state=KICKOFF", 1800, boot))
+con = console()[boot:]
+p1 = int(re.findall(r"rotoball I SYMBOL p1 0x([0-9a-f]+)", con)[-1], 16)
+ball = int(re.findall(r"rotoball I SYMBOL ball 0x([0-9a-f]+)", con)[-1], 16)
 run(30)
 shot("kickoff")
 
-if p1 is not None:
-    x0, z0 = p1_pos(p1)
-    hold("w", 90)
-    x1, z1 = p1_pos(p1)
-    check(f"W drives forward (+x: {x0:.1f} -> {x1:.1f})", x1 > x0 + 5)
-    shot("play")
-    hold("a", 60)
-    x2, z2 = p1_pos(p1)
-    hold("d", 120)
-    x3, z3 = p1_pos(p1)
-    # P1 faces +x; its screen-right is -z (pitch.c projects -z to the right)
-    check(f"A / D strafe left / right (z {z1:.1f} -> {z2:.1f} -> {z3:.1f})", z2 > z1 and z3 < z2)
-    hold("s", 90)
-    x4, z4 = p1_pos(p1)
-    check(f"S drives back (x {x3:.1f} -> {x4:.1f})", x4 < x3)
-else:
-    check("p1 address logged", False)
+x0, z0 = p1_pos(p1)
+hold("w", 60)
+check("play is frozen on the kick-off screen", p1_pos(p1) == (x0, z0))
+
+mark = len(console())
+hold("space", 4)
+check("SPACE starts the match (state=PLAYING)", wait_for("state=PLAYING", 120, mark))
+start_frame = status_frame()
+x0, z0 = p1_pos(p1)
+hold("w", 90)
+x1, z1 = p1_pos(p1)
+check(f"W drives forward (+x: {x0:.1f} -> {x1:.1f})", x1 > x0 + 5)
+shot("play")
+hold("a", 60)
+x2, z2 = p1_pos(p1)
+hold("d", 120)
+x3, z3 = p1_pos(p1)
+# P1 faces +x; its screen-right is -z (pitch.c projects -z to the right)
+check(f"A / D strafe left / right (z {z1:.1f} -> {z2:.1f} -> {z3:.1f})", z2 > z1 and z3 < z2)
+hold("s", 90)
+x4, z4 = p1_pos(p1)
+check(f"S drives back (x {x3:.1f} -> {x4:.1f})", x4 < x3)
 
 perf = re.findall(r"rotoball I PERF frame=\d+ fps=([\d.]+)", console()[boot:])
 if perf:
     print("  INFO fps (PERF lines):", ", ".join(perf[-4:]))
 
-# the rest of the 90-second match, fast-forwarded
+# the rest of the 90-second match, fast-forwarded (P1 idle, the CPU plays)
 call("/emu/fastforward", "POST", on=1)
-over = wait_for("match over", 7200, boot, step=300)
+over = wait_for("state=FULLTIME", 7200, mark, step=60)
 call("/emu/fastforward", "POST", on=0)
-m = re.findall(r"match over score=(\d+):(\d+)", console()[boot:])
-check("the match runs to the end (match over)", over, console()[-400:])
+secs = (status_frame() - start_frame) / 60.0      # VGA: 60 VBLs a second
+check("the match runs to full time (state=FULLTIME)", over, console()[-400:])
+check(f"the match lasts 90 s ({secs:.1f} emulated s, VBL-counted)", 88.0 <= secs <= 93.0)
+m = re.findall(r"state=FULLTIME score=(\d+):(\d+)", console()[mark:])
+tackles = console()[mark:].count("tackle:")
 if m:
-    print(f"  INFO final score {m[-1][0]}:{m[-1][1]} (P1 idle after the key checks; CPU plays on)")
+    print(f"  INFO final score {m[-1][0]}:{m[-1][1]}, {tackles} tackles in the match")
 run(30)
-shot("match_over")
+shot("fulltime")
+
+px, pz = p1_pos(p1)
+b0 = ball_pos(ball)
+hold("w", 100)
+check("play is frozen at full time", p1_pos(p1) == (px, pz) and ball_pos(ball) == b0)
+
+mark = len(console())
+hold("space", 4)
+check("SPACE starts a new match", wait_for("state=PLAYING score=0:0", 120, mark))
+run(60)
+shot("restart")
 
 mark = len(console())
 call("/input/key", "POST", key="esc", action="down")

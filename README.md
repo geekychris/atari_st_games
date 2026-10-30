@@ -37,6 +37,7 @@ MIT licensed, same as the originals (see [LICENSE](LICENSE)).
 | [Emberkeep](emberkeep) | Falcon030 | cavern exploring by lantern light |
 | [Warden Keep](warden_keep) | Falcon030 | isometric room: push barrels, grab jewels |
 | [Miner Meteor](miner_meteor) | Falcon030 | single-screen platformer |
+| [Rotoball](rotoball) | Falcon030 | split-screen futuristic ball sport |
 | [Block Breaker 3D](block_breaker_3d) | Falcon + 68060 (CT60) | breakout down a tunnel |
 | [Marble Tilt](marble_tilt) | Falcon + 68060 (CT60) | tilting maze board |
 | [Harbour Crane](harbour_crane) | Falcon + 68060 (CT60) | pendulum crane loading a rolling ship |
@@ -88,7 +89,7 @@ MIT licensed, same as the originals (see [LICENSE](LICENSE)).
 <td align="center" width="25%"><a href="emberkeep"><img src="emberkeep/docs/level2.png" width="200" alt="Emberkeep"></a><br>Emberkeep<br><sub>Falcon030</sub></td>
 <td align="center" width="25%"><a href="warden_keep"><img src="warden_keep/docs/play.png" width="200" alt="Warden Keep"></a><br>Warden Keep<br><sub>Falcon030</sub></td>
 <td align="center" width="25%"><a href="miner_meteor"><img src="miner_meteor/docs/level2.png" width="200" alt="Miner Meteor"></a><br>Miner Meteor<br><sub>Falcon030</sub></td>
-<td></td>
+<td align="center" width="25%"><a href="rotoball"><img src="rotoball/docs/play.png" width="200" alt="Rotoball"></a><br>Rotoball<br><sub>Falcon030</sub></td>
 </tr>
 <tr>
 <td align="center" width="25%"><a href="block_breaker_3d"><img src="block_breaker_3d/docs/play_060.png" width="200" alt="Block Breaker 3D"></a><br>Block Breaker 3D<br><sub>Falcon + 68060 (CT60)</sub></td>

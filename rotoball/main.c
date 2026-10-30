@@ -12,9 +12,10 @@
  * physics, or AI is layered on top.
  *
  * Atari Falcon030 port: the __MINT__ branches replace the AmigaOS parts
- * (screen + ScreenBuffers, IDCMP window, libraries, WaitTOF) with the
- * Falcon layer (../falcon_port/fgfx, 320x240 true colour, triple
- * buffered), IKBD keys / joystick and a VBL-paced game tick. See README.md.
+ * (screen + ScreenBuffers, IDCMP window, libraries, WaitTOF, the
+ * CurrentTime match clock) with the Falcon layer (../falcon_port/fgfx,
+ * 320x240 true colour, triple buffered), IKBD keys / joystick and a game
+ * tick paced by the VBL. See README.md.
  */
 
 #if defined(__MINT__)
@@ -174,14 +175,30 @@ static void close_display(void)
 static Skimmer p1, p2;
 static Ball     ball;
 static int p1_score = 0, p2_score = 0;
-static LONG match_frames_left;      /* countdown, 25fps assumption */
-#define MATCH_FRAMES (90L * 25)     /* 90 seconds */
+/* The match clock counts real time in CLOCK_HZ units, whatever the frame
+ * rate (it used to count drawn frames at an assumed 25 a second, so a
+ * 50 fps machine finished the "90 seconds" in 45). */
+#define CLOCK_HZ     50
+static LONG match_frames_left;      /* clock units left (CLOCK_HZ a second) */
+#define MATCH_FRAMES (90L * CLOCK_HZ)   /* 90 seconds */
 static int last_scorer = -1;        /* 0 = P1, 1 = P2, -1 = none yet */
 static int tackle_cooldown = 0;     /* frames until next tackle allowed */
 #define TACKLE_COOLDOWN_F   60      /* ~0.7s at 88fps observed */
+/* Set by a tackle; cleared once the skimmers are apart again. While set,
+ * the new holder can't be tackled back, so two skimmers that stay in
+ * contact no longer pass the ball back and forth every cooldown. */
+static int tackle_lock = 0;
+
+/* Match flow: kick-off screen -> playing -> full time (play frozen under
+ * the result) -> SPACE starts the next match. */
+#define MS_KICKOFF   0
+#define MS_PLAYING   1
+#define MS_FULLTIME  2
+static LONG match_state = MS_KICKOFF;
 
 /* WASD input state (edge-latched: pressed while down, cleared on up). */
 static int in_fwd = 0, in_back = 0, in_left = 0, in_right = 0;
+static int start_pressed = 0;       /* SPACE went down since the last frame */
 
 static void kickoff(void)
 {
@@ -197,8 +214,43 @@ static void init_game(void)
     p1_score = 0; p2_score = 0;
     match_frames_left = MATCH_FRAMES;
     last_scorer = -1;
+    tackle_cooldown = 0;
+    tackle_lock = 0;
     kickoff();
 }
+
+/* Real-time match clock: CLOCK_HZ units elapsed since the last call, from
+ * intuition's CurrentTime() (microseconds), so the 90-second match lasts
+ * 90 seconds at any frame rate while the game itself keeps one physics
+ * step per drawn frame, as before. */
+#if defined(__MINT__)
+/* Falcon: the game ticks at TICK_HZ = CLOCK_HZ from the VBL counter, so
+ * one tick is one clock unit (see the main loop). */
+static void clock_reset(void) { }
+static LONG clock_units(void) { return 1; }
+#else
+static ULONG clk_secs, clk_micros;
+static LONG  clk_us;
+static void clock_reset(void)
+{
+    CurrentTime(&clk_secs, &clk_micros);
+    clk_us = 0;
+}
+static LONG clock_units(void)
+{
+    ULONG s, m;
+    LONG us, units;
+    CurrentTime(&s, &m);
+    us = (LONG)(s - clk_secs) * 1000000L + ((LONG)m - (LONG)clk_micros);
+    clk_secs = s;
+    clk_micros = m;
+    if (us < 0 || us > 1000000L) us = 1000000L / CLOCK_HZ;   /* clock set / stall */
+    clk_us += us;
+    units = clk_us / (1000000L / CLOCK_HZ);
+    clk_us -= units * (1000000L / CLOCK_HZ);
+    return units;
+}
+#endif
 
 /* Award points when the ball crosses a goal line. Distance from the
  * scoring skimmer's start position determines the bonus — the
@@ -338,14 +390,14 @@ static void resolve_collision(Skimmer *a, Skimmer *b)
     LONG sep2 = ((dx >> 8)*(dx >> 8) + (dz >> 8)*(dz >> 8));
     LONG min = (ROTO_RADIUS * 2) >> 8;
     LONG min2 = min * min;
-    if (sep2 >= min2) return;
+    if (sep2 >= min2) { tackle_lock = 0; return; }   /* apart: re-arm tackles */
 
     /* Ball transfer on contact. a = P1 (idx 0), b = P2 (idx 1).
      * On successful tackle the new carrier also gets an impulse kick
      * in their forward direction — without it, both skimmers stay
      * locked in the collision zone forever with the ball ping-ponging
      * every cooldown expiry. */
-    if (tackle_cooldown == 0 && ball.carrier >= 0) {
+    if (tackle_cooldown == 0 && !tackle_lock && ball.carrier >= 0) {
         int steal_to = (ball.carrier == 0) ? 1 : 0;
         Skimmer *new_carrier = (steal_to == 0) ? a : b;
         Skimmer *old_carrier = (steal_to == 0) ? b : a;
@@ -353,6 +405,7 @@ static void resolve_collision(Skimmer *a, Skimmer *b)
         new_carrier->has_ball = 1;
         ball.carrier    = steal_to;
         tackle_cooldown = TACKLE_COOLDOWN_F;
+        tackle_lock     = 1;     /* no tackle back until they separate */
         sound_play_ping();
         AB_I("tackle: ball -> %s", steal_to == 0 ? "P1" : "P2");
         /* Kick the new carrier forward, and give the old carrier a
@@ -434,10 +487,18 @@ static void update_ball(void)
 }
 
 /* ---- frame loop --------------------------------------------------- */
+/* One line of HUD text centred across the screen (8 px topaz). */
+static void hud_centre(struct RastPort *rp, int y, const char *s)
+{
+    LONG n = (LONG)strlen(s);
+    Move(rp, SCR_W / 2 - n * 4, y);
+    Text(rp, (STRPTR)s, n);
+}
+
 static void draw_hud(struct RastPort *rp)
 {
     char buf[32];
-    LONG secs = (match_frames_left + 24) / 25;
+    LONG secs = (match_frames_left + CLOCK_HZ - 1) / CLOCK_HZ;
     if (secs < 0) secs = 0;
 
     SetAPen(rp, PEN_HUD_FG);
@@ -462,12 +523,20 @@ static void draw_hud(struct RastPort *rp)
     Text(rp, (STRPTR)buf, strlen(buf));
 
     /* Match-over banner. */
-    if (match_frames_left <= 0) {
+    if (match_state == MS_FULLTIME) {
         const char *winner =
             (p1_score >  p2_score) ? "YOU WIN!" :
             (p2_score >  p1_score) ? "CPU WINS" : "DRAW";
         Move(rp, SCR_W/2 - 30, PANE_H - 6);
         Text(rp, (STRPTR)winner, strlen(winner));
+        hud_centre(rp, PANE_H + 60, "PRESS SPACE TO PLAY AGAIN");
+    }
+
+    /* Kick-off screen: title and controls in the player's pane. */
+    if (match_state == MS_KICKOFF) {
+        hud_centre(rp, PANE_H + 40, "ROTOBALL");
+        hud_centre(rp, PANE_H + 60, "W/S DRIVE   A/D STRAFE");
+        hud_centre(rp, PANE_H + 80, "PRESS SPACE TO START");
     }
 }
 
@@ -509,8 +578,9 @@ static void render_frame(void)
 
 #if defined(__MINT__)
 /* Falcon: input from the IKBD key state (and joystick 1), as the Amiga
- * builds it from RAWKEY up/down messages: W/S forward/back, A/D strafe.
- * Port addition: cursor keys and the joystick do the same. */
+ * builds it from RAWKEY up/down messages: W/S forward/back, A/D strafe,
+ * SPACE start. Port addition: cursor keys and the joystick do the same
+ * (fire = SPACE). */
 static void read_keys(void)
 {
     volatile UBYTE *k = ikbd_keys;
@@ -519,15 +589,17 @@ static void read_keys(void)
     in_back  = (k[SC_S] || k[SC_DOWN]  || (j & 2)) ? 1 : 0;
     in_left  = (k[SC_A] || k[SC_LEFT]  || (j & 4)) ? 1 : 0;
     in_right = (k[SC_D] || k[SC_RIGHT] || (j & 8)) ? 1 : 0;
+    if ((ikbd_key_hit(SC_SPACE) | (ikbd_joy1_hits() & 0x80)) != 0) start_pressed = 1;
     if (k[SC_ESC]) running = 0;
 }
 
 #define FRCLOCK (*(volatile long *)0x466)
-/* Game ticks per second. The Amiga runs one tick per drawn frame
- * (WaitTOF-capped), and the match clock counts 25 ticks a second
- * (MATCH_FRAMES = 90 s * 25), so the Falcon runs 25 ticks a second
- * whatever its frame rate: the 90-second match lasts 90 seconds. */
-#define TICK_HZ 25
+/* Game ticks per second: the Amiga runs one tick per drawn frame, at up
+ * to 50 a second (WaitTOF); the Falcon runs 50 a second from the VBL
+ * whatever its frame rate (up to 8 per drawn frame), which is also the
+ * match clock's unit, so a tick is one clock unit. */
+#define TICK_HZ   CLOCK_HZ
+#define MAX_TICKS 8
 #endif
 
 int main(void)
@@ -558,6 +630,7 @@ int main(void)
     ab_register_var("p2_z",        AB_TYPE_I32, &p2.z);
     ab_register_var("carrier",     AB_TYPE_I32, &ball.carrier);
     ab_register_var("tackle_cd",   AB_TYPE_I32, &tackle_cooldown);
+    ab_register_var("match_state", AB_TYPE_I32, &match_state);
 
     math_init();
     init_game();
@@ -585,10 +658,11 @@ int main(void)
     AB_I("SYMBOL frame_count 0x%06lx", (long)&frame_count);
     AB_I("SYMBOL p1 0x%06lx", (long)&p1);
     AB_I("SYMBOL ball 0x%06lx", (long)&ball);
-    AB_I("score=0:0 time=%ld", (long)(match_frames_left / 25));
+    AB_I("SYMBOL match_state 0x%06lx", (long)&match_state);
+    AB_I("state=KICKOFF");
     while (running) {
-        /* ticks due at TICK_HZ since the last frame (up to 4); wait for
-         * the next VBL when none is due yet */
+        /* ticks due at TICK_HZ since the last frame (up to MAX_TICKS);
+         * wait for the next VBL when none is due yet */
         long now = FRCLOCK;
         tick_acc += (now - last_vbl) * TICK_HZ;
         last_vbl = now;
@@ -598,7 +672,7 @@ int main(void)
             continue;
         }
         tick_acc -= (long)ticks * vbl_hz;
-        if (ticks > 4) { ticks = 4; tick_acc = 0; }
+        if (ticks > MAX_TICKS) { ticks = MAX_TICKS; tick_acc = 0; }
         read_keys();
         if (!running) break;
         while (ticks-- > 0) {
@@ -617,6 +691,7 @@ int main(void)
                 int down = !(code & 0x80);
                 int c    = code & 0x7F;
                 if (c == 0x45 && down) running = 0;   /* ESC */
+                else if (c == 0x40 && down) start_pressed = 1;   /* SPACE */
                 else if (c == 0x11) in_fwd   = down;  /* W */
                 else if (c == 0x21) in_back  = down;  /* S */
                 else if (c == 0x20) in_left  = down;  /* A */
@@ -625,6 +700,17 @@ int main(void)
         }
 #endif
 
+        /* SPACE starts a match from the kick-off screen or after full
+         * time. */
+        if (start_pressed && match_state != MS_PLAYING) {
+            init_game();
+            match_state = MS_PLAYING;
+            clock_reset();
+            AB_I("state=PLAYING score=0:0");
+        }
+        start_pressed = 0;
+
+        if (match_state == MS_PLAYING) {
         /* CPU strategy with fixed facing:
          *   - Target: ball position (chase) or P1 goal (when carrying).
          *   - P2 faces -X (angle 180) so its "forward" = -X (toward P1).
@@ -652,20 +738,23 @@ int main(void)
         check_goal();
 
         if (tackle_cooldown > 0)   tackle_cooldown--;
-        if (match_frames_left > 0) match_frames_left--;
+        match_frames_left -= clock_units();
+        if (match_frames_left <= 0) {
+            /* full time: play freezes under the result banner */
+            match_frames_left = 0;
+            match_state = MS_FULLTIME;
+            AB_I("state=FULLTIME score=%ld:%ld", (long)p1_score, (long)p2_score);
+        }
+        }   /* MS_PLAYING */
 #if defined(__MINT__)
         }   /* ticks */
-        {   /* port: log score changes, the match end and the speed for tests */
-            static int last_p1 = 0, last_p2 = 0, ended = 0;
+        {   /* port: log score changes for tests */
+            static int last_p1 = 0, last_p2 = 0;
             if (p1_score != last_p1 || p2_score != last_p2) {
                 AB_I("score=%ld:%ld time=%ld", (long)p1_score, (long)p2_score,
-                     (long)(match_frames_left / 25));
+                     (long)(match_frames_left / CLOCK_HZ));
                 last_p1 = p1_score;
                 last_p2 = p2_score;
-            }
-            if (!ended && match_frames_left <= 0) {
-                AB_I("match over score=%ld:%ld", (long)p1_score, (long)p2_score);
-                ended = 1;
             }
         }
 #endif
@@ -677,9 +766,10 @@ int main(void)
         if ((frame_count % 100) == 0) {
             long vbls = FRCLOCK - fps_vbl;
             long fps10 = vbls > 0 ? (10L * vbl_hz * (long)(frame_count - fps_frame)) / vbls : 0;
-            AB_I("PERF frame=%ld fps=%ld.%ld p1=%ld,%ld carrier=%ld time=%ld",
+            AB_I("PERF frame=%ld fps=%ld.%ld p1=%ld,%ld carrier=%ld state=%ld time=%ld",
                  (long)frame_count, fps10 / 10, fps10 % 10, (long)(p1.x >> FP),
-                 (long)(p1.z >> FP), (long)ball.carrier, (long)(match_frames_left / 25));
+                 (long)(p1.z >> FP), (long)ball.carrier, (long)match_state,
+                 (long)(match_frames_left / CLOCK_HZ));
             fps_vbl = FRCLOCK;
             fps_frame = frame_count;
         }

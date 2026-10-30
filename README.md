@@ -34,6 +34,9 @@ MIT licensed, same as the originals (see [LICENSE](LICENSE)).
 | [Spectral Keep](spectral_keep) | Falcon030 | isometric flip-screen adventure |
 | [Rolling Steel](rolling_steel) | Falcon + 68060 (CT60) | isometric marble racer |
 | [Planet Chomp](planet_chomp) | Falcon + 68060 (CT60) | maze chase on a sphere |
+| [Emberkeep](emberkeep) | Falcon030 | cavern exploring by lantern light |
+| [Warden Keep](warden_keep) | Falcon030 | isometric room: push barrels, grab jewels |
+| [Miner Meteor](miner_meteor) | Falcon030 | single-screen platformer |
 
 ## Screenshots
 
@@ -67,6 +70,12 @@ MIT licensed, same as the originals (see [LICENSE](LICENSE)).
 <td align="center" width="25%"><a href="spectral_keep"><img src="spectral_keep/docs/play.png" width="200" alt="Spectral Keep"></a><br>Spectral Keep<br><sub>Falcon030</sub></td>
 <td align="center" width="25%"><a href="rolling_steel"><img src="rolling_steel/docs/play.png" width="200" alt="Rolling Steel"></a><br>Rolling Steel<br><sub>Falcon + 68060 (CT60)</sub></td>
 <td align="center" width="25%"><a href="planet_chomp"><img src="planet_chomp/docs/play.png" width="200" alt="Planet Chomp"></a><br>Planet Chomp<br><sub>Falcon + 68060 (CT60)</sub></td>
+</tr>
+<tr>
+<td align="center" width="25%"><a href="emberkeep"><img src="emberkeep/docs/level2.png" width="200" alt="Emberkeep"></a><br>Emberkeep<br><sub>Falcon030</sub></td>
+<td align="center" width="25%"><a href="warden_keep"><img src="warden_keep/docs/play.png" width="200" alt="Warden Keep"></a><br>Warden Keep<br><sub>Falcon030</sub></td>
+<td align="center" width="25%"><a href="miner_meteor"><img src="miner_meteor/docs/level2.png" width="200" alt="Miner Meteor"></a><br>Miner Meteor<br><sub>Falcon030</sub></td>
+<td></td>
 </tr>
 </table>
 

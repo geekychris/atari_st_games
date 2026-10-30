@@ -37,6 +37,18 @@ MIT licensed, same as the originals (see [LICENSE](LICENSE)).
 | [Emberkeep](emberkeep) | Falcon030 | cavern exploring by lantern light |
 | [Warden Keep](warden_keep) | Falcon030 | isometric room: push barrels, grab jewels |
 | [Miner Meteor](miner_meteor) | Falcon030 | single-screen platformer |
+| [Block Breaker 3D](block_breaker_3d) | Falcon + 68060 (CT60) | breakout down a tunnel |
+| [Marble Tilt](marble_tilt) | Falcon + 68060 (CT60) | tilting maze board |
+| [Harbour Crane](harbour_crane) | Falcon + 68060 (CT60) | pendulum crane loading a rolling ship |
+| [Tank Duel](tank_duel) | Falcon + 68060 (CT60) | tank fight in a walled arena |
+| [Orbit Docking](orbit_docking) | Falcon + 68060 (CT60) | docking with a spinning station |
+| [Stack Tower](stack_tower) | Falcon + 68060 (CT60) | falling blocks round a tower |
+| [Ridge Runner](ridge_runner) | Falcon + 68060 (CT60) | hover-bike valley race |
+| [Drone Courier](drone_courier) | Falcon + 68060 (CT60) | drone deliveries across a city |
+| [Canyon Rail](canyon_rail) | Falcon + 68060 (CT60) | canyon rail shooter |
+| [Lander 3D](lander_3d) | Falcon + 68060 (CT60) | lunar lander over 3D terrain |
+| [Boing Pinball](boing_pinball) | Falcon + 68060 (CT60) | pinball, three tables |
+| [ScAIry Fun](scairy_fun) | Falcon + 68060 (CT60) | a self-driving car game |
 
 ## Screenshots
 
@@ -77,6 +89,24 @@ MIT licensed, same as the originals (see [LICENSE](LICENSE)).
 <td align="center" width="25%"><a href="miner_meteor"><img src="miner_meteor/docs/level2.png" width="200" alt="Miner Meteor"></a><br>Miner Meteor<br><sub>Falcon030</sub></td>
 <td></td>
 </tr>
+<tr>
+<td align="center" width="25%"><a href="block_breaker_3d"><img src="block_breaker_3d/docs/play_060.png" width="200" alt="Block Breaker 3D"></a><br>Block Breaker 3D<br><sub>Falcon + 68060 (CT60)</sub></td>
+<td align="center" width="25%"><a href="marble_tilt"><img src="marble_tilt/docs/play_060.png" width="200" alt="Marble Tilt"></a><br>Marble Tilt<br><sub>Falcon + 68060 (CT60)</sub></td>
+<td align="center" width="25%"><a href="harbour_crane"><img src="harbour_crane/docs/play_060.png" width="200" alt="Harbour Crane"></a><br>Harbour Crane<br><sub>Falcon + 68060 (CT60)</sub></td>
+<td align="center" width="25%"><a href="tank_duel"><img src="tank_duel/docs/play_060.png" width="200" alt="Tank Duel"></a><br>Tank Duel<br><sub>Falcon + 68060 (CT60)</sub></td>
+</tr>
+<tr>
+<td align="center" width="25%"><a href="orbit_docking"><img src="orbit_docking/docs/play_060.png" width="200" alt="Orbit Docking"></a><br>Orbit Docking<br><sub>Falcon + 68060 (CT60)</sub></td>
+<td align="center" width="25%"><a href="stack_tower"><img src="stack_tower/docs/title.png" width="200" alt="Stack Tower"></a><br>Stack Tower<br><sub>Falcon + 68060 (CT60)</sub></td>
+<td align="center" width="25%"><a href="ridge_runner"><img src="ridge_runner/docs/play_060.png" width="200" alt="Ridge Runner"></a><br>Ridge Runner<br><sub>Falcon + 68060 (CT60)</sub></td>
+<td align="center" width="25%"><a href="drone_courier"><img src="drone_courier/docs/play_060.png" width="200" alt="Drone Courier"></a><br>Drone Courier<br><sub>Falcon + 68060 (CT60)</sub></td>
+</tr>
+<tr>
+<td align="center" width="25%"><a href="canyon_rail"><img src="canyon_rail/docs/play_060.png" width="200" alt="Canyon Rail"></a><br>Canyon Rail<br><sub>Falcon + 68060 (CT60)</sub></td>
+<td align="center" width="25%"><a href="lander_3d"><img src="lander_3d/docs/play_060.png" width="200" alt="Lander 3D"></a><br>Lander 3D<br><sub>Falcon + 68060 (CT60)</sub></td>
+<td align="center" width="25%"><a href="boing_pinball"><img src="boing_pinball/docs/play_060.png" width="200" alt="Boing Pinball"></a><br>Boing Pinball<br><sub>Falcon + 68060 (CT60)</sub></td>
+<td align="center" width="25%"><a href="scairy_fun"><img src="scairy_fun/docs/play_060.png" width="200" alt="ScAIry Fun"></a><br>ScAIry Fun<br><sub>Falcon + 68060 (CT60)</sub></td>
+</tr>
 </table>
 
 Captured in Hatari through the agent API (`/screen`, 2x). Each game's README
@@ -88,6 +118,10 @@ Also here:
   header shims, graphics on ST bitplanes and Falcon 16-bit chunky, Paula
   emulation on STE DMA sound, a C ProTracker player, IKBD input, NatFeats
   logging).
+- [a3d_falcon](a3d_falcon): the Falcon platform layer for the amiga3d engine
+  games (Block Breaker 3D to ScAIry Fun): 256-colour interleaved planes, an
+  assembly polygon fill, the bridge calls through a mailbox the agent API
+  reaches, and test, trace and end-to-end tools.
 - [falcon_3do](falcon_3do): the layer for the 3DO-derived games (Spectral
   Keep, Rolling Steel, Planet Chomp): their Amiga machine layer on the
   Falcon's true colour screen.

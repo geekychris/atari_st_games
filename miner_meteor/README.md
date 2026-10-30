@@ -59,14 +59,19 @@ Key presses shorter than a drawn frame are not lost (`ikbd_key_hit`).
   can stand: in cavern 1 only one of the four keys can be reached. The port
   uses -12 (a 66-pixel jump). A breadth-first search over the game's tick
   function then reaches every key and the exit of caverns 1, 3, 4 and 5.
-  Caverns 2 and 6 still can't be finished: their exit is behind four
-  floor-level spike tiles that no jump clears (in cavern 6 a solid conveyor
-  two tiles up also caps the jump). Not changed here. The search found
-  that cavern 2 becomes winnable by turning any one of its four floor spikes
-  into floor (e.g. row 12, column 10: `#..P.....^.^^....E.#`); cavern 6 has no
-  fix of up to three tiles (a gap in each full-width conveyor plus one spike
-  removed): its keys are 80 pixels above the floor, out of jump reach, so it
-  needs new platforms. Set `JUMP_IMPULSE` to (-8) for the original jump.
+  Caverns 2 and 6 still couldn't be finished, so their level data is fixed
+  too (`levels`, rows marked "bug in the original: unwinnable"), the same as
+  in amiga_games: in cavern 2 one of the four floor spikes in front of the
+  exit is floor (row 12 `#..P.....^.^^....E.#`); in cavern 6 a step block in
+  row 11 (`#....#.............#`) leads up through a gap in the row-10
+  conveyor (`#<<<<<.<<<<<<<.<<<<#`, column 6) to the ledges, a gap in the
+  row-3 conveyor (`#>>>>.>>>>>>>>>>>>>#`) reaches the top key, and the
+  second row-10 gap (column 14) drops you past the spikes to the exit.
+  Guardians, spikes, conveyors, collapsing floors and keys are otherwise
+  unchanged. A search over the real game state (moving guardians,
+  collapsing floors, air, the collision snaps) finds a run through every
+  one of the six caverns, checked by replaying it with the game code.
+  Set `JUMP_IMPULSE` to (-8) for the original jump.
 - The title and end-screen captions are drawn in pen 0 over a coloured bar.
   With the Amiga's default JAM2 draw mode (background pen 0) they come out as
   black boxes; the port draws text in JAM1.

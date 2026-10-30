@@ -7,16 +7,13 @@
 
 #include <stdint.h>
 #include "a3d.h"
+#include "falcon_sys.h"
 
 /* the sky gradient (plat_sky): the pen it replaces, over rows 0..rows-1,
  * and the gradient pen (32-47) on each row */
 extern int a3f_sky_pen, a3f_sky_rows;
 extern uint8_t a3f_sky_col[SCREEN_H];
-void a3f_draw_pens(void);
+void a3f_draw_pens(void);               /* after fsys_screen_init */
 
-/* an AmigaDOS name ("PROGDIR:stack_tower.mod") as the GEMDOS 8.3 name the
- * port's Makefile copies the file to, in the program's DATA folder
- * ("DATA\\STACK_TO.MOD"); out holds 18 */
-void a3f_path(const char *amiga, char *out);
 
 #endif

@@ -24,42 +24,29 @@
 #include "a3d.h"
 #include "a3d_draw.h"
 #include "a3d_falcon.h"
+#include "falcon_sys.h"
 #include "a3d_fix.h"
 
-/* ---------- the font ---------- */
-static uint8_t glyph[256][8];           /* one byte per row, bit 7 left */
+/* ---------- the font: the TOS 8 x 8 one (falcon_sys.c) ---------- */
+#define glyph a3f_glyph
 static int glyph_base = 6;
 
 int a3_draw_init(void)
 {
-    register void *fonts __asm__("a1");
-    const uint8_t *f8, *data;
-    int first, last, width, c, r;
-    __asm__ volatile (".dc.w 0xa000" : "=r"(fonts) : : "d0", "d1", "d2", "a0", "a2", "memory");
-    f8 = ((const uint8_t **)fonts)[1];  /* the 8 x 8 font header */
-    first = *(const uint16_t *)(f8 + 36);
-    last = *(const uint16_t *)(f8 + 38);
-    data = *(const uint8_t *const *)(f8 + 76);
-    width = *(const uint16_t *)(f8 + 80);
-    for (c = first; c <= last && c < 256; c++)
-        for (r = 0; r < 8; r++) glyph[c][r] = data[r * width + (c - first)];
+    fsys_font_init();
     return 1;
 }
 
 int g_clip_y0 = 0, g_clip_y1 = SCREEN_H - 1;
 
-/* ---------- the pens: three longs of plane words each ---------- */
-static uint32_t pat[48][3];             /* planes 0-1, 2-3, 4-5 */
+/* ---------- the pens: three longs of plane words each (falcon_sys.c) ---------- */
+#define pat a3f_pat
 static void masks(void);
 int a3f_sky_pen = -1, a3f_sky_rows;
 uint8_t a3f_sky_col[SCREEN_H];          /* the sky pen's pen (32-47) on each row */
 
 void a3f_draw_pens(void)
 {
-    int c, p;
-    for (c = 0; c < 48; c++)
-        for (p = 0; p < 3; p++)
-            pat[c][p] = ((c >> (2 * p)) & 1 ? 0xFFFF0000UL : 0) | ((c >> (2 * p + 1)) & 1 ? 0xFFFFUL : 0);
     masks();
 }
 
@@ -117,10 +104,6 @@ void g_sync(void) {}
 
 #define pspan g_span                    /* the drawing's pixels are the games' */
 
-/* a3d_rows.S: rows of spans, n of them, row k at base + rowoff[k] */
-void a3f_rows(const int16_t *xl, const int16_t *xr, int n, const int32_t *rowoff, uint8_t *base, const uint32_t *pat);
-/* a3d_rows.S: poly_spans in one tight loop; -1 for over SPAN_MAX rows */
-int a3f_poly_spans(const int16_t *xs, const int16_t *ys, int n, int16_t *xl, int16_t *xr, int *ymin);
 
 /* ---------- the tall picture: the same format, every row kept ---------- */
 static Canvas pic;

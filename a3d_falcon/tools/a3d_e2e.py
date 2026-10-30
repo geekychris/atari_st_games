@@ -63,7 +63,45 @@ GAMES = {
                    [("left", "IN_LEFT"), ("right", "IN_RIGHT"), ("up", "IN_UP"), ("down", "IN_DOWN"),
                     ("space", "IN_FIRE"), ("alt", "IN_FIRE"), ("v", "IN_VIEW"), ("c", "IN_VIEW"),
                     ("p", "IN_PAUSE"), ("h", "IN_HELP")]),
+    # its own engine (../terra_strike); no autopilot: the play shots are a
+    # scene with tanks ahead, and the firing and lift-off are checked (terra_checks)
+    "terra_strike": ("TERRA", ["start"], ["scene tanks"], "space",
+                     [("left", "IN_LEFT"), ("right", "IN_RIGHT"), ("up", "IN_UP"), ("down", "IN_DOWN"),
+                      ("a", "IN_FAST"), ("z", "IN_SLOW"), ("space", "IN_FIRE"), ("alt", "IN_FIRE"),
+                      ("p", "IN_PAUSE"), ("return", "IN_START")]),
 }
+
+
+def terra_checks(res):
+    """Terra Strike: up lifts the craft off the pad; held fire destroys the tanks of the "tanks" scene"""
+    ag.command("hook start", 60)
+    time.sleep(1)
+    ag.call("/input/key", "POST", key="up", action="down")
+    t = time.time()
+    while get("pstate") != 1 and time.time() - t < 15:     # PS_FLYING
+        time.sleep(0.5)
+    ag.call("/input/key", "POST", key="up", action="up")
+    if get("pstate") != 1:
+        res["fails"].append("up: the craft didn't lift off")
+    ag.command("hook scene tanks", 60)
+    score0 = get("score")
+    _, since = ag.console()
+    ag.call("/input/key", "POST", key="space", action="down")
+    t = time.time()
+    while get("score") == score0 and time.time() - t < 30:
+        time.sleep(1)
+    ag.call("/input/key", "POST", key="space", action="up")
+    kills = [l for l in ag.console(since)[0].splitlines() if " KILL " in l]
+    if get("score") == score0:
+        res["fails"].append("fire: no hits in 30 s")
+    else:
+        res["keys"].append("fire->%s" % (kills[0].split(" I ")[-1] if kills else "score"))
+    music = [l for l in ag.console()[0].splitlines() if "music loaded" in l]
+    if not music:
+        res["fails"].append("no music")
+
+
+EXTRA = {"terra_strike": terra_checks}
 
 
 def in_bits(gdir):
@@ -159,6 +197,8 @@ def main(argv):
             break
     if s2 != s0:
         res["fails"].append("esc: state %d, not the title's %d" % (s2, s0))
+    if game in EXTRA:
+        EXTRA[game](res)
     # the autopilot
     start_game(cfg)
     time.sleep(6)

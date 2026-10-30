@@ -63,11 +63,12 @@ in Hatari diffed with the host build's output), `make host-test`.
 | `a3d_draw.h`, `a3d_draw.c` | the engine's drawing: the 2D, the 3D draw list and the models unchanged; the Falcon's `Canvas`, span filler, text and tall picture in place of the Amiga's bitplanes |
 | `a3d_rows.S` | the polygon fill and the scan conversion in 68030 assembly |
 | `a3d_sound.c` | the engine's effects and voice clips, with the C library's files and memory |
-| `main_falcon.c` | the screen, the palette and sky, IKBD keys and joystick (ST scancodes to the Amiga raw keys the games map), timing, ptplayer on the Paula emulation, the main loop |
+| `falcon_sys.h`, `falcon_sys.c` | the machine layer, shared with [Terra Strike](../terra_strike) (its own engine): the screen and its row map, the palette, the pens' plane patterns and rectangles, the TOS font and text, IKBD keys (ST scancodes to the Amiga raw keys the games map) and joystick, the timers and frame pacing, the games' files, ptplayer's music |
+| `main_falcon.c` | the engine's platform side on it: `a3d_plat.h`'s calls, the sky pens, the effects, the main loop |
 | `bridge.c`, `compat/bridge_client.h` | the AmigaBridge client: logging through NatFeats, the variables and hooks through a mailbox in memory |
 | `test_falcon.c`, `trace_falcon.c` | a game's tests, and its trace program, on the Falcon |
 | `tools/a3d_agent.py` | drives the games in Hatari through the agent API: run, test, trace, `cmd` (the mailbox), keys, screenshots, frame rates |
-| `tools/a3d_e2e.py` | the end-to-end check each game's README reports |
+| `tools/a3d_e2e.py` | the end-to-end check each game's README reports (Terra Strike's too) |
 | `tools/port_game.py` | copies a game in from amiga_games |
 
 ## The screen

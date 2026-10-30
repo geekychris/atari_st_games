@@ -50,6 +50,7 @@ MIT licensed, same as the originals (see [LICENSE](LICENSE)).
 | [Lander 3D](lander_3d) | Falcon + 68060 (CT60) | lunar lander over 3D terrain |
 | [Boing Pinball](boing_pinball) | Falcon + 68060 (CT60) | pinball, three tables |
 | [ScAIry Fun](scairy_fun) | Falcon + 68060 (CT60) | a self-driving car game |
+| [Terra Strike](terra_strike) | Falcon + 68060 (CT60) | Zarch-style landscape shooter |
 
 ## Screenshots
 
@@ -108,6 +109,12 @@ MIT licensed, same as the originals (see [LICENSE](LICENSE)).
 <td align="center" width="25%"><a href="boing_pinball"><img src="boing_pinball/docs/play_060.png" width="200" alt="Boing Pinball"></a><br>Boing Pinball<br><sub>Falcon + 68060 (CT60)</sub></td>
 <td align="center" width="25%"><a href="scairy_fun"><img src="scairy_fun/docs/play_060.png" width="200" alt="ScAIry Fun"></a><br>ScAIry Fun<br><sub>Falcon + 68060 (CT60)</sub></td>
 </tr>
+<tr>
+<td align="center" width="25%"><a href="terra_strike"><img src="terra_strike/docs/play_060.png" width="200" alt="Terra Strike"></a><br>Terra Strike<br><sub>Falcon + 68060 (CT60)</sub></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
 </table>
 
 Captured in Hatari through the agent API (`/screen`, 2x). Each game's README
@@ -120,7 +127,8 @@ Also here:
   emulation on STE DMA sound, a C ProTracker player, IKBD input, NatFeats
   logging).
 - [a3d_falcon](a3d_falcon): the Falcon platform layer for the amiga3d engine
-  games (Block Breaker 3D to ScAIry Fun): 256-colour interleaved planes, an
+  games (Block Breaker 3D to ScAIry Fun), whose machine layer
+  (`falcon_sys.c`) Terra Strike uses too: 256-colour interleaved planes, an
   assembly polygon fill, the bridge calls through a mailbox the agent API
   reaches, and test, trace and end-to-end tools.
 - [falcon_3do](falcon_3do): the layer for the 3DO-derived games (Spectral

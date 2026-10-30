@@ -42,7 +42,7 @@ CFLAGS   = $(CPU) -O2 -fno-omit-frame-pointer -fno-defer-pop -Wall -DA3_FALCON \
 OUT      = build
 TOUT     = $(OUT)/obj/test
 ENGINE   = $(A3F)a3d_math.c $(A3F)a3d_fix.c $(A3F)a3d_draw.c $(A3F)a3d_rows.S $(A3F)a3d_sound.c
-PLATFORM = $(A3F)main_falcon.c $(A3F)bridge.c $(STPORT)paula.c $(STPORT)ptplayer.c \
+PLATFORM = $(A3F)main_falcon.c $(A3F)falcon_sys.c $(A3F)bridge.c $(STPORT)paula.c $(STPORT)ptplayer.c \
            $(STPORT)st_ikbd.c $(STPORT)natfeats.c
 OBJS     = $(patsubst %,$(OUT)/obj/%.o,$(notdir $(basename $(GAME) $(CORE) $(ENGINE) $(PLATFORM))))
 TOBJS    = $(patsubst %,$(OUT)/obj/%.o,$(notdir $(basename $(CORE) $(TESTS) $(A3F)a3d_math.c $(A3F)a3d_fix.c \

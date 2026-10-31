@@ -148,10 +148,33 @@ void cam_setup(Cam *c)
 
 /* World point -> camera space. |delta| stays below 2^15 for anything the
  * renderer draws, so the products fit in 32 bits. */
+void cam_place(Cam *c, int32_t x, int32_t y, int32_t z)
+{
+    c->x = x >> 16; c->y = y >> 16; c->z = z >> 16;
+    c->qx = (x >> 12) & 15; c->qy = (y >> 12) & 15; c->qz = (z >> 12) & 15;
+    c->precise = 1;
+}
+
+void cam_for(const Cam *c, int32_t x, int32_t y, int32_t z, Cam *out)
+{
+    *out = *c;
+    if (!c->precise) return;
+    out->qx -= (x >> 12) & 15;
+    out->qy -= (y >> 12) & 15;
+    out->qz -= (z >> 12) & 15;
+}
+
 void cam_xform(const Cam *c, int32_t wx, int32_t wy, int32_t wz, V3 *out)
 {
     int32_t dx = wx - c->x, dz = wz - c->z, dy = wy - c->y;
     int32_t rx, rz;
+
+    if (c->precise) {
+        /* sixteenths of a unit (fits 32 bits up to 32767 units away) */
+        dx = dx * 16 - c->qx;
+        dy = dy * 16 - c->qy;
+        dz = dz * 16 - c->qz;
+    }
 
     rx = (dx * (c->cy >> 4) - dz * (c->sy >> 4)) >> 12;
     rz = (dx * (c->sy >> 4) + dz * (c->cy >> 4)) >> 12;
@@ -182,20 +205,25 @@ int cam_horizon(const Cam *c)
 
 int clip_near(V3 *in, int n, V3 *out)
 {
+    return clip_near_at(in, n, out, NEAR_Z);
+}
+
+int clip_near_at(V3 *in, int n, V3 *out, int32_t near_z)
+{
     int i, m = 0;
     for (i = 0; i < n; i++) {
         V3 *a = &in[i], *b = &in[(i + 1) % n];
-        int ain = a->z >= NEAR_Z, bin = b->z >= NEAR_Z;
+        int ain = a->z >= near_z, bin = b->z >= near_z;
         if (ain && m < MAX_PV) out[m++] = *a;
         if (ain != bin && m < MAX_PV) {
             /* interpolate from the inside end, so a shared edge clips to the
              * same point in both polygons whichever way they wind it */
             V3 *p = ain ? a : b, *q = ain ? b : a;
             int32_t dz = q->z - p->z;
-            int32_t t = NEAR_Z - p->z;
+            int32_t t = near_z - p->z;
             out[m].x = p->x + (int32_t)(((int64_t)(q->x - p->x) * t) / dz);
             out[m].y = p->y + (int32_t)(((int64_t)(q->y - p->y) * t) / dz);
-            out[m].z = NEAR_Z;
+            out[m].z = near_z;
             m++;
         }
     }

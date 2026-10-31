@@ -22,6 +22,7 @@ buffer).
 | [Lander 3D](../lander_3d) | 1.3 (and slow motion) | 25 |
 | [Boing Pinball](../boing_pinball) | 12.3-14.6 | 25 |
 | [ScAIry Fun](../scairy_fun) | 2.9-3.0 | 25 |
+| [Ace Pilot 2](../ace_pilot2) | 4-8 | 25 |
 
 Frames a second with each game's autopilot playing, in Hatari; 25 is the
 cap, the Amiga versions' rate. The games run their simulations at 25

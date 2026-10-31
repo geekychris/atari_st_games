@@ -51,6 +51,7 @@ MIT licensed, same as the originals (see [LICENSE](LICENSE)).
 | [Boing Pinball](boing_pinball) | Falcon + 68060 (CT60) | pinball, three tables |
 | [ScAIry Fun](scairy_fun) | Falcon + 68060 (CT60) | a self-driving car game |
 | [Terra Strike](terra_strike) | Falcon + 68060 (CT60) | Zarch-style landscape shooter |
+| [Ace Pilot 2](ace_pilot2) | Falcon + 68060 (CT60) | 3D biplane war, eight missions |
 
 ## Screenshots
 
@@ -111,7 +112,7 @@ MIT licensed, same as the originals (see [LICENSE](LICENSE)).
 </tr>
 <tr>
 <td align="center" width="25%"><a href="terra_strike"><img src="terra_strike/docs/play_060.png" width="200" alt="Terra Strike"></a><br>Terra Strike<br><sub>Falcon + 68060 (CT60)</sub></td>
-<td></td>
+<td align="center" width="25%"><a href="ace_pilot2"><img src="ace_pilot2/docs/play_060.png" width="200" alt="Ace Pilot 2"></a><br>Ace Pilot 2<br><sub>Falcon + 68060 (CT60)</sub></td>
 <td></td>
 <td></td>
 </tr>
@@ -127,7 +128,7 @@ Also here:
   emulation on STE DMA sound, a C ProTracker player, IKBD input, NatFeats
   logging).
 - [a3d_falcon](a3d_falcon): the Falcon platform layer for the amiga3d engine
-  games (Block Breaker 3D to ScAIry Fun), whose machine layer
+  games (Block Breaker 3D to ScAIry Fun, and Ace Pilot 2), whose machine layer
   (`falcon_sys.c`) Terra Strike uses too: 256-colour interleaved planes, an
   assembly polygon fill, the bridge calls through a mailbox the agent API
   reaches, and test, trace and end-to-end tools.

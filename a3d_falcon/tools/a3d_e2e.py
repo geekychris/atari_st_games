@@ -63,6 +63,11 @@ GAMES = {
                    [("left", "IN_LEFT"), ("right", "IN_RIGHT"), ("up", "IN_UP"), ("down", "IN_DOWN"),
                     ("space", "IN_FIRE"), ("alt", "IN_FIRE"), ("v", "IN_VIEW"), ("c", "IN_VIEW"),
                     ("p", "IN_PAUSE"), ("h", "IN_HELP")]),
+    "ace_pilot2": ("ACEPILT2", ["start"], ["autoplay on"], "space",
+                   [("left", "IN_LEFT"), ("right", "IN_RIGHT"), ("up", "IN_UP"), ("down", "IN_DOWN"),
+                    ("space", "IN_FIRE"), ("a", "IN_THR_UP"), ("z", "IN_THR_DN"), ("v", "IN_VIEW"),
+                    ("c", "IN_VIEW"), ("i", "IN_INVERT"), ("p", "IN_PAUSE"), ("b", "IN_AUTO"),
+                    ("h", "IN_HELP"), ("return", "IN_START"), ("f1", "IN_START")]),
     # its own engine (../terra_strike); no autopilot: the play shots are a
     # scene with tanks ahead, and the firing and lift-off are checked (terra_checks)
     "terra_strike": ("TERRA", ["start"], ["scene tanks"], "space",

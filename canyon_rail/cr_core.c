@@ -67,7 +67,7 @@ void cr_camera(const CRGame *g, Cam *c)
 
 int cr_project(const CRGame *g, int32_t x, int32_t y, int32_t z, int *px, int *py, int32_t *depth)
 {
-    Cam c = { 0 };                      /* precise and qx..qz: a whole-unit camera */
+    Cam c = { 0 };       /* cr_camera sets only the whole-unit fields: precise stays 0 */
     V3 v;
     int32_t sx, sy;
     cr_camera(g, &c);

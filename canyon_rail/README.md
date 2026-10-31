@@ -27,10 +27,7 @@ amiga_games and built for the Falcon as they are.
   repository's Paula emulation and C ProTracker player (`../st_port`).
   No data files: the effects are synthesised at start-up, so the program is all you need.
 - **Changes to the game's code:**
-  One line: `cr_project()` in `cr_core.c` zeroes its local camera
-  (`Cam c = { 0 }`), because the engine's camera gained fields (`precise`,
-  `qx`-`qz`, for the smooth cameras of Ridge Runner and Tank Duel) that
-  `cr_camera()` doesn't set. Otherwise the amiga_games originals, unchanged.
+  None: the game's sources are the amiga_games originals, unchanged.
 
 ## Controls
 

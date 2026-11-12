@@ -32,7 +32,7 @@ Collect all the gold, then climb out at the top.
 
 | | |
 |---|---|
-| `player.c`, `enemy.c`, `level.c`, `editor.c`, `sound.c`, all headers | **Unmodified**, except `level.c`'s level data (the repaired levels, below). Levels saved and loaded by the editor go through the AmigaDOS shim, as 8.3 files in the program's directory. |
+| `player.c`, `enemy.c`, `level.c`, `editor.c`, `sound.c`, all headers | **Unmodified**, except the repaired levels (`level.c`'s data) and the guard fix (below), which are the same in the Amiga original. Levels saved and loaded by the editor go through the AmigaDOS shim, as 8.3 files in the program's directory. |
 | `modplay.c` | The game's own music player, which drives Paula directly. One `ST port:` block skips its two dummy CIA reads, which are a bus error on the ST. It is built as C++ (`modplay_st.cpp`) so its `dmacon` writes reach the Paula emulation, and plays on STE DMA sound at 6258 Hz. |
 | `render.c` | One `ST port:` block: `render_st_tile`, the same tile drawing as `render_playfield`, for a single tile. |
 | `main_st.c` | `main.c`'s loop (kept as `main.c.amiga`, its screen code as `gfx.c.amiga`). Each 50 Hz VBL runs one game step and one music tick, as on the Amiga; the drawing happens once per frame. |
@@ -54,6 +54,18 @@ As released, 149 of the 150 levels couldn't be won (only level 24 could), so the
 - `tools/repair_levels.py` made the repairs.
 
 `python3 tools/check_levels.py` builds this port's `player.c` and `level.c` for the host. It plays all 150 levels to the exit along the route search's moves, with the guards left out, and wins 150 of 150.
+
+## Guards
+
+The guards are fixed, with the same rule in every version (`game.h`, `enemy.c`, `level.c`, and `render.c` skips a dead guard). The original's guards stepped a tile every 3rd frame, while the player takes 5 across and 7 on ladders, and kept stolen gold until they were trapped. Now:
+- **Speed:** a tile every 8 frames across and 10 up or down.
+- **Start:** every guard waits 3 s at the start of a level, and one placed on the player's start row enters from the top instead.
+- **Stolen gold:** a guard drops it again after 4 s, on the first free cell with a floor.
+
+The ZX Spectrum port's bot (the same rules in C) plays the 150 repaired levels:
+- **The original's guards:** 3 cleared, 139 caught, 8 out of time.
+- **The fixed guards:** 66 cleared, 56 caught, 28 out of time (62-74 cleared across runs).
+- **No guards:** 124 cleared, the bot's own limit.
 
 ## Performance
 

@@ -24,6 +24,7 @@ Controls, as on the Amiga:
 - Space, Return or fire with left or right: dig.
 - Fire: start.
 - E on the title: level editor (digits pick a tile, fire places it, F1–F3 are the editor's file and level keys).
+- R: give up the life (restart the level).
 - Esc: quit.
 
 Collect all the gold, then climb out at the top.
@@ -60,11 +61,14 @@ As released, 149 of the 150 levels couldn't be won (only level 24 could), so the
 The guards are fixed, with the same rule in every version (`game.h`, `enemy.c`, `level.c`, and `render.c` skips a dead guard). The original's guards stepped a tile every 3rd frame, while the player takes 5 across and 7 on ladders, and kept stolen gold until they were trapped. Now:
 - **Speed:** a tile every 8 frames across and 10 up or down.
 - **Start:** every guard waits 3 s at the start of a level, and one placed on the player's start row enters from the top instead.
-- **Stolen gold:** a guard drops it again after 4 s, on the first free cell with a floor.
+- **Stolen gold:** a guard drops it again after 3 s, on the first empty cell it steps onto where gold lay at the start of the level.
+- **Giving up:** R (new) gives up the life and restarts the level.
+
+Dropping on any free cell with a floor was measured first, with the bot on 600 runs (150 levels, 4 seeds). It made a winnable level unwinnable 228 times in 21 runs, mostly in one-way pits that can be reached but not left. Dropping only where gold lay at the start: 11 times, in 9 runs, when the player has already gone down a one-way drop. R is the way out of those cases.
 
 The ZX Spectrum port's bot (the same rules in C) plays the 150 repaired levels:
 - **The original's guards:** 3 cleared, 139 caught, 8 out of time.
-- **The fixed guards:** 66 cleared, 56 caught, 28 out of time (62-74 cleared across runs).
+- **The fixed guards:** 57 cleared, 54 caught, 39 out of time (57-64 cleared across runs).
 - **No guards:** 124 cleared, the bot's own limit.
 
 ## Performance

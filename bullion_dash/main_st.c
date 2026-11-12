@@ -139,6 +139,13 @@ static int game_step(void)
             transition_frames = 30;
         }
 
+        /* fix (as in main.c): R gives up the life and restarts the level */
+        if (gs.state == STATE_PLAYING && input_key(KEY_R)) {
+            gs.state = STATE_DYING;
+            gs.player.state = PS_DEAD;
+            transition_frames = 30;
+        }
+
         /* Check if all gold collected - reveal hidden ladders */
         if (gs.state == STATE_PLAYING &&
             gs.gold_collected >= gs.gold_total) {

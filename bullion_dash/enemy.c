@@ -340,12 +340,16 @@ static void enemy_update_one(GameState *gs, Enemy *e)
         return;
     }
 
-    /*--- Movement timing (enemies are slower) ---*/
-    e->move_timer++;
-    if (e->move_timer < (PLAYER_SPEED + 1)) {
+    /*--- fix: how long stolen gold has been carried (trap_timer counts, as
+     *    it is only used while trapped; the drop is below) ---*/
+    if (e->has_gold && e->trap_timer)
+        e->trap_timer--;
+
+    /*--- Movement timing (fix: frames to wait before the next step) ---*/
+    if (e->move_timer) {
+        e->move_timer--;
         return;
     }
-    e->move_timer = 0;
 
     /*--- AI pathfinding ---*/
     move_dx = 0;
@@ -414,6 +418,7 @@ static void enemy_update_one(GameState *gs, Enemy *e)
         }
     }
 
+    e->move_timer = (move_dy != 0 ? ENEMY_CLIMB_FRAMES : ENEMY_STEP_FRAMES) - 1;
     e->anim++;
 
     /*--- Gold stealing ---*/
@@ -421,8 +426,15 @@ static void enemy_update_one(GameState *gs, Enemy *e)
         /* 30% chance to pick up gold */
         if ((enemy_rand() % 100) < 30) {
             e->has_gold = 1;
+            e->trap_timer = ENEMY_CARRY_FRAMES;     /* fix: carried this long */
             gs->tiles[e->gx][e->gy] = TILE_EMPTY;
         }
+    /* fix: after ENEMY_CARRY_FRAMES the gold is dropped on the first empty
+       cell the guard steps onto where gold lay at the start of the level */
+    } else if (e->has_gold && !e->trap_timer && tile_at(gs, e->gx, e->gy) == TILE_EMPTY
+               && level_gold_home(e->gx, e->gy)) {
+        gs->tiles[e->gx][e->gy] = TILE_GOLD;
+        e->has_gold = 0;
     }
 
     /*--- Drop gold when falling into hole ---*/

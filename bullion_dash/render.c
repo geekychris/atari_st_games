@@ -335,7 +335,7 @@ static void draw_enemy(struct RastPort *rp, GameState *gs, int idx)
     int anim;
 
     e = &gs->enemies[idx];
-    if (!e->active) return;
+    if (!e->active || e->state == ES_DEAD) return;     /* (fix: one entering from the top) */
 
     sx = PLAYFIELD_X + e->px;
     sy = PLAYFIELD_Y + e->py;

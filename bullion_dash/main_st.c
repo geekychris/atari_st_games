@@ -6,7 +6,8 @@
  *
  * Port of the Amiga version (main.c in geekychris/amiga_games, kept as
  * main.c.amiga; the screen code gfx.c as gfx.c.amiga): player.c,
- * enemy.c, level.c, editor.c and sound.c are unmodified; render.c has an
+ * enemy.c, level.c, editor.c and sound.c are the original's (with its level and
+ * guard fixes); render.c has an
  * ST port block; modplay.c (the game's own music player, which drives
  * Paula directly) skips the CIA reads and is built as C++
  * (modplay_st.cpp) against the Paula emulation on the STE's DMA sound.
@@ -133,6 +134,13 @@ static int game_step(void)
          * logic and get the correct hit-box behavior during
          * mid-tile animation. */
         if (enemy_check_collision(&gs)) {
+            gs.state = STATE_DYING;
+            gs.player.state = PS_DEAD;
+            transition_frames = 30;
+        }
+
+        /* fix (as in main.c): R gives up the life and restarts the level */
+        if (gs.state == STATE_PLAYING && input_key(KEY_R)) {
             gs.state = STATE_DYING;
             gs.player.state = PS_DEAD;
             transition_frames = 30;

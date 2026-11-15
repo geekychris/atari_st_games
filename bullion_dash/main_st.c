@@ -139,6 +139,15 @@ static int game_step(void)
             transition_frames = 30;
         }
 
+        /* fix (as in main.c): a player buried by a regrowing brick or
+         * fallen off the grid is PS_DEAD too, but only a guard's touch
+         * ended the life: he stood frozen, for ever on a level whose
+         * guards can't reach him */
+        if (gs.state == STATE_PLAYING && gs.player.state == PS_DEAD) {
+            gs.state = STATE_DYING;
+            transition_frames = 30;
+        }
+
         /* fix (as in main.c): R gives up the life and restarts the level */
         if (gs.state == STATE_PLAYING && input_key(KEY_R)) {
             gs.state = STATE_DYING;

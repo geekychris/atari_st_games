@@ -104,8 +104,16 @@ static void start_level(int level_num) {
     /* Find player start */
     for (s = ld->entities; s->type != ENT_NONE; s++) {
         if (s->type == ENT_PLAYER_START) {
+            /* fix (as in main.c): player_init() resets score, lives and
+               health, so every life and level began at 0 points with 3
+               lives and the game could never end. Keep them (the death
+               code sets health 3). */
+            LONG score = p->score;
+            BYTE lives = p->lives, health = p->health;
             player_init(p, p->character, s->tx * TILE_SIZE, s->ty * TILE_SIZE - PLAYER_H + TILE_SIZE);
-            /* Preserve score and lives from previous level */
+            p->score = score;
+            p->lives = lives;
+            p->health = health;
             break;
         }
     }
@@ -256,8 +264,12 @@ static void game_step(void)
         break;
 
     case STATE_GAMEOVER:
-        game.transition--;
-        if (game.transition <= 0) {
+        /* fix (as in main.c): transition is a UWORD: it went 0 -> 65535
+           on the step after the wait ended, so the game-over screen read
+           no input (not even ESC) for another 65535 steps, ~22 minutes */
+        if (game.transition > 0)
+            game.transition--;
+        if (game.transition == 0) {
             /* Wait for input */
             inp = input_read();
             if (inp & (INP_JUMP | INP_START))

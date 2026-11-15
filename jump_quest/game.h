@@ -54,7 +54,11 @@ extern "C" {	/* sound.c is built as C++ */
 #define FP(x)           ((x) << FP_SHIFT)
 #define FP_INT(x)       ((x) >> FP_SHIFT)
 #define GRAVITY         6
-#define JUMP_FORCE      (-78)
+/* fix (as in the original): was -78, which rises 14 px (10.6 fixed point,
+   FP_INT per tick), but level 1's pipes are 32 px tall and level 3 climbs
+   48 px: no level could be finished. -180 rises 56 px (the Lynx and Atari
+   8-bit ports' value); -172 is the smallest that clears all three levels. */
+#define JUMP_FORCE      (-180)
 #define MOVE_SPEED      FP(2)
 #define MAX_FALL        FP(6)
 

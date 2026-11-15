@@ -411,9 +411,15 @@ static const char *state_name(int s)
 }
 
 /* one 50 Hz step of main.c's state machine, without the drawing */
+static UWORD prev_inp;   /* last step's input, for presses */
+
 static int game_step(void)
 {
     UWORD inp = input_read();
+    /* fix (as in main.c): the title, item box and game over took a held
+       FIRE as a new press (FIRE held from play skipped the item box) */
+    UWORD pressed = inp & ~prev_inp;
+    prev_inp = inp;
 
     if (inp & INPUT_ESC)
         return 0;
@@ -421,7 +427,7 @@ static int game_step(void)
     /* State machine */
     switch (gs.state) {
         case STATE_TITLE:
-            if (inp & (INPUT_FIRE | INPUT_START)) {
+            if (pressed & (INPUT_FIRE | INPUT_START)) {
                 game_init(&gs);
             }
             break;
@@ -439,18 +445,25 @@ static int game_step(void)
             break;
 
         case STATE_ITEM_GET:
-            if (inp & (INPUT_FIRE | INPUT_START)) {
+            /* fix (as in main.c): game_update runs its 90-step timer (it
+               was never called here, so the box waited for FIRE) */
+            game_update(&gs, 0, 0, 0, 0, 0, 0);
+            if (pressed & (INPUT_FIRE | INPUT_START)) {
                 gs.state = STATE_PLAYING;
             }
             break;
 
         case STATE_GAMEOVER:
-            if (inp & (INPUT_FIRE | INPUT_START)) {
+            /* fix (as in main.c): game_update runs its 180-step timer back
+               to the title (never called here before) */
+            game_update(&gs, 0, 0, 0, 0, 0, 0);
+            if (pressed & (INPUT_FIRE | INPUT_START)) {
                 gs.state = STATE_TITLE;
             }
             break;
     }
-    gs.frame++;
+    /* fix (as in main.c): gs.frame was also incremented here, twice a step
+       with game_update's; game_update's alone now */
     return 1;
 }
 
@@ -474,7 +487,7 @@ static void game_draw(int steps)
         if (gs.state == STATE_TITLE)
             draw_title(hud);
         else
-            draw_gameover(hud);
+            draw_gameover(hud, &gs);
         gfx_hud_commit();
         gfx_restore_back();
         return;

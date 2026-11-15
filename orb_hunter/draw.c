@@ -36,6 +36,16 @@
 
 /* Frame counter reference (from GameState) */
 static WORD g_frame = 0;
+#ifdef __MINT__
+/* ST port: the hit and invulnerability flashes skip every other drawn
+ * frame. g_frame is the game's step count, which goes up 1-4 a drawn
+ * frame here (logic at 50 Hz, drawing at 16-25 fps), so its parity can
+ * stay the same for frame after frame; this counts drawn frames. */
+static WORD g_flash = 0;
+#define FLASH_SKIP  (g_flash & 1)
+#else
+#define FLASH_SKIP  (g_frame & 1)
+#endif
 
 /* 5x7 bitmap font */
 static const UBYTE font_5x7[96][7] = {
@@ -455,8 +465,10 @@ static void draw_hunter(struct RastPort *rp, GameState *gs)
     sx = (WORD)(h->x >> 16);
     sy = (WORD)(h->y >> 16) + HUD_H;
 
-    /* Invulnerability flash: skip drawing every other frame */
-    if (h->invuln_timer > 0 && (g_frame & 1)) return;
+    /* Invulnerability flash: skip drawing every other frame.
+       (fix: gs->frame went up twice a loop, so this was always odd and the
+       hunter vanished for the whole of its invulnerability; main.c) */
+    if (h->invuln_timer > 0 && FLASH_SKIP) return;
 
     if (h->rolled) {
         draw_hunter_rolled(rp, sx, sy);
@@ -653,8 +665,10 @@ static void draw_enemies(struct RastPort *rp, GameState *gs)
         ex = (WORD)(e->x >> 16);
         ey = (WORD)(e->y >> 16) + HUD_H;
 
-        /* Flash when hit */
-        if (e->timer > 0 && (g_frame & 1)) continue;
+        /* Flash when hit. fix: tested e->timer, the AI's behaviour timer
+           (always running), with g_frame always odd (gs->frame went up
+           twice a loop): no enemy was ever drawn. Now its own hit timer. */
+        if (e->hit_timer > 0 && FLASH_SKIP) continue;
 
         switch (e->type) {
             case ENEMY_CRAWLER:
@@ -907,16 +921,11 @@ void draw_hud(struct RastPort *rp, GameState *gs)
         }
     }
 
-    /* Debug: show hunter Y pos */
-    {
-        char dbg[40];
-        LONG hy = (h->y >> 16);
-        LONG feet = hy + (LONG)HUNTER_H;
-        snprintf(dbg, sizeof(dbg), "Y%ld F%ld R%ld,%ld",
-                 hy, feet, (long)gs->room_x, (long)gs->room_y);
-        SetAPen(rp, COL_WHITE);
-        draw_string(rp, 170, 9, dbg, 1);
-    }
+    /* Score. fix: kept but never shown; here was a leftover debug line
+       (the hunter's Y, feet and room) */
+    sprintf(buf, "SC %06ld", (long)gs->score);
+    SetAPen(rp, COL_WHITE);
+    draw_string(rp, 160, 9, buf, 1);
 
     /* Bottom HUD line separator */
     SetAPen(rp, COL_METAL2);
@@ -961,7 +970,9 @@ void draw_title(struct RastPort *rp)
     draw_string(rp, cx, 182, "UP - JUMP / AIM UP", 1);
     draw_string(rp, cx, 192, "DOWN - ROLL FORM", 1);
     draw_string(rp, cx, 202, "FIRE - SHOOT/BOMB", 1);
-    draw_string(rp, cx, 212, "START - MISSILE MODE", 1);
+    /* fix: said "START - MISSILE MODE"; a missile is UP + FIRE (game.c
+       update_hunter) and START does nothing in play */
+    draw_string(rp, cx, 212, "UP+FIRE - MISSILE", 1);
 
     /* Version */
     SetAPen(rp, COL_ROCK2);
@@ -1008,9 +1019,10 @@ void draw_item_get(struct RastPort *rp, GameState *gs)
 
 /* --- Game Over screen --- */
 
-void draw_gameover(struct RastPort *rp)
+void draw_gameover(struct RastPort *rp, GameState *gs)
 {
     WORD cx;
+    char buf[24];
 
     /* Advance our own frame counter so blinking prompt keeps toggling
        after the last draw_frame() call. */
@@ -1026,6 +1038,12 @@ void draw_gameover(struct RastPort *rp)
     /* Decorative line */
     SetAPen(rp, COL_LAVA2);
     RectFill(rp, cx, 107, cx + string_width("GAME OVER", 3), 108);
+
+    /* fix: the final score (it was never shown) */
+    sprintf(buf, "SCORE %06ld", (long)gs->score);
+    SetAPen(rp, COL_WHITE);
+    cx = (SCREEN_W - string_width(buf, 1)) / 2;
+    draw_string(rp, cx, 130, buf, 1);
 
     /* "PRESS FIRE TO CONTINUE" */
     if ((g_frame / 20) & 1) {
@@ -1139,6 +1157,7 @@ void draw_st_actors(struct RastPort *rp, GameState *gs)
     UBYTE tile;
 
     g_frame = gs->frame;
+    g_flash++;
 
     /* the animated tiles of the room */
     for (tx = 0; tx < n_anim; tx++) {

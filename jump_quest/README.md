@@ -33,7 +33,7 @@ Controls, as on the Amiga:
 | | |
 |---|---|
 | `player.c`, `enemy.c`, `items.c`, `hud.c`, `title.c`, `levels/*.h` | **Unmodified.** |
-| `game.h` | Under `__MINT__`, the game's `gfx_init`/`gfx_swap`/`gfx_cleanup`/`gfx_backbuffer` are renamed `jq_*`, because the ST layer uses those names. The declarations get C linkage for `sound.c`, which is built as C++. |
+| `game.h` | `JUMP_FORCE` -180, as in the fixed original. Under `__MINT__`, the game's `gfx_init`/`gfx_swap`/`gfx_cleanup`/`gfx_backbuffer` are renamed `jq_*`, because the ST layer uses those names. The declarations get C linkage for `sound.c`, which is built as C++. |
 | `gfx.c` | Screen setup replaced by thin wrappers over the ST layer. `gfx_draw_tile` is unchanged. |
 | `level.c` | `level_draw` uses a tile cache (below); `level_get_tile` uses a 16-bit multiply. |
 | `sound.c` | The chiptune and the effects drive the Paula registers directly. Under `__MINT__` those point at the Paula emulation, which plays on STE DMA sound at 6258 Hz. |
@@ -47,9 +47,15 @@ The Amiga version redraws the whole playfield, about 280 tiles of rectangles and
 - **Scenery:** the visible tiles are copied into the scenery buffer only when the camera steps or a `?` block is hit. Each screen then gets the new playfield once.
 - **Every frame:** sprites are drawn and undone through dirty rectangles. The HUD is in the HUD layer.
 
-### Deviation from the original
+### Fixes from the original
 
-`sound.c` starts each sound effect but never stops it. On the Amiga, Paula repeats a sample until its DMA is turned off, so every effect keeps looping as a buzz until the next one. The port plays each effect once: an `ST port:` change points the channel at a silent block after the effect, as one-shot samples normally do.
+The Amiga original's fixes ([amiga_games#48](https://github.com/geekychris/amiga_games/pull/48)) are in the port too:
+- **Jump:** `JUMP_FORCE` is -180 (was -78, a 14 px rise against 32 px pipes, so no level could be finished).
+- **Lives:** `start_level()` keeps score, lives and health across `player_init()`, so lives run out and the game ends.
+- **Game over:** the `UWORD` countdown stops at 0 instead of wrapping to 65535, so the screen takes a press after its wait.
+- **Sound effects:** the original's effects looped until the next one. The port already played each one once (an `ST port:` change in `sound.c` points the channel at a silent block after the effect). The collect sparkle on channel 3 now has its own buffer instead of sharing channel 2's.
+
+The original's joystick decode and bridge variable fixes don't apply: the port reads the joystick through the IKBD and has no bridge.
 
 ## Performance
 

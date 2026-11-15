@@ -73,7 +73,7 @@ static const char *state_name(int s)
 /* one 50 Hz step of main.c's state machine, without the drawing */
 static int game_step(void)
 {
-    int running = 1;
+    int running = 1, pressed;
 
     input_update(&input);
     if (startup_delay > 0) {
@@ -85,10 +85,20 @@ static int game_step(void)
         }
     }
 
+    /* fix (as in main.c): the title and GAME OVER took a held FIRE/UP as a
+       press, so one still held from play skipped GAME OVER and began a new
+       game */
+    {
+        static int was_held;
+        int held = input.fire || input.jump;
+        pressed = held && !was_held;
+        was_held = held;
+    }
+
     switch (gs.state) {
         case STATE_TITLE:
             gs.frame++;
-            if (input.fire || input.jump) {
+            if (pressed) {
                 game_init(&gs);
                 gs.state = STATE_PLAYING;
             }
@@ -112,7 +122,7 @@ static int game_step(void)
 
         case STATE_GAMEOVER:
             game_update(&gs, &input);
-            if (input.fire || input.jump) {
+            if (pressed) {
                 gs.state = STATE_TITLE;
             }
             break;

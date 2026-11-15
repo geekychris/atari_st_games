@@ -29,10 +29,10 @@ Controls, as on the Amiga:
 
 | | |
 |---|---|
-| `game.c`, all headers | **Unmodified.** |
+| `game.c`, all headers | **Unmodified**, with the original's fixes ([amiga_games#52](https://github.com/geekychris/amiga_games/pull/52)): the start area clear to `BUGGY_X + BUGGY_W + 30`, the bullet's world x as a `LONG` (it overflowed after 32768 px), and a session high score. |
 | `sound.c` | Unmodified except for one `ST port:` block: the two dummy CIA reads between stopping and restarting a channel are skipped (there is no CIA at `$BFE001` on the ST; the access is a bus error). It drives the Paula registers directly, so it is built as C++ (`sound_st.cpp`) against the Paula emulation, which plays on STE DMA sound at 6258 Hz. |
-| `draw.c` | Original drawing code, with `ST port:` changes listed below. Checkpoints are numbered zones (`ZONE 02`), as in the 3DO and Amiga versions. |
-| `main_st.c` | `main.c`'s state machine (kept as `main.c.amiga`), split into a 50 Hz logic step and a per-frame draw. |
+| `draw.c` | Original drawing code, with `ST port:` changes listed below. The original's fixes are in both its drawing and the port's: `HI` is the high score, the mountains wrap at their 512 px repeat (not 640, which made them jump), and mines are 2 px wide on every column (half were invisible). Checkpoints are numbered zones (`ZONE 02`), as in the 3DO and Amiga versions. |
+| `main_st.c` | `main.c`'s state machine (kept as `main.c.amiga`), split into a 50 Hz logic step and a per-frame draw. As in the fixed original, the title and GAME OVER need a new press of fire or jump. |
 | `st_input.c` | The same key map, from the IKBD handler and joystick 1. |
 
 ### ST port changes in `draw.c`

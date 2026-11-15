@@ -265,7 +265,9 @@ static void draw_stars(struct RastPort *rp)
 static void draw_far_mountains(struct RastPort *rp, LONG scroll_x)
 {
     WORD x, top[SCREEN_W], bot[SCREEN_W];
-    WORD offset = (WORD)((scroll_x / 400) % 640);  /* 0.25x parallax speed */
+    /* fix (as in the original): wrap at the range's 512 px repeat (640
+       made it jump every 2560 px) */
+    WORD offset = (WORD)((scroll_x / 400) % 512);  /* 0.25x parallax speed */
 
     for (x = 0; x < SCREEN_W; x += 2) {
         WORD phase = (WORD)((x + offset) * 3 / 2);
@@ -282,7 +284,7 @@ static void draw_far_mountains(struct RastPort *rp, LONG scroll_x)
 static void draw_near_mountains(struct RastPort *rp, LONG scroll_x)
 {
     WORD x, top[SCREEN_W], bot[SCREEN_W];
-    WORD offset = (WORD)((scroll_x / 200) % 640);  /* 0.5x parallax speed */
+    WORD offset = (WORD)((scroll_x / 200) % 512);  /* 0.5x parallax speed; fix: 512 */
 
     for (x = 0; x < SCREEN_W; x += 2) {
         WORD phase = (WORD)((x + offset) * 5 / 2);
@@ -299,7 +301,10 @@ static void draw_near_mountains(struct RastPort *rp, LONG scroll_x)
 static void draw_far_mountains(struct RastPort *rp, LONG scroll_x)
 {
     WORD x;
-    WORD offset = (WORD)((scroll_x / 400) % 640);  /* 0.25x parallax speed */
+    /* 0.25x parallax speed. fix: wrapped at 640, but the range repeats
+       every 512 px of offset ((x + offset) * 3 / 2 through a 256-step
+       wave), so it jumped every 2560 px */
+    WORD offset = (WORD)((scroll_x / 400) % 512);
 
     SetAPen(rp, COL_DKPURPLE);
     for (x = 0; x < SCREEN_W; x += 2) {
@@ -315,7 +320,8 @@ static void draw_far_mountains(struct RastPort *rp, LONG scroll_x)
 static void draw_near_mountains(struct RastPort *rp, LONG scroll_x)
 {
     WORD x;
-    WORD offset = (WORD)((scroll_x / 200) % 640);  /* 0.5x parallax speed */
+    /* 0.5x parallax speed. fix: wrap at its repeat, 512 (as above) */
+    WORD offset = (WORD)((scroll_x / 200) % 512);
 
     SetAPen(rp, COL_PURPLE);
     for (x = 0; x < SCREEN_W; x += 2) {
@@ -363,13 +369,21 @@ static void draw_terrain(struct RastPort *rp, GameState *gs)
                 t[BODY][x] = th + 3;        b[BODY][x] = SCREEN_H - 25;
                 if (ttype == TERRAIN_ROCK) {
                     t[ROCK][x] = th - 10;   b[ROCK][x] = th - 1;
-                } else if (ttype == TERRAIN_MINE && (x & 3) < 2) {
+                } else if (ttype == TERRAIN_MINE) {
+                    /* fix (as in the original): on every column, not only
+                       where (x & 3) < 2 (half the mines were invisible) */
                     t[MINE][x] = th - 4;    b[MINE][x] = th - 1;
                 }
                 break;
         }
         if (++tidx >= TERRAIN_LEN) tidx = 0;
     }
+    /* fix (as in the original): mines 2 px wide (x and x + 1) */
+    for (x = SCREEN_W - 2; x >= 0; x--)
+        if (b[MINE][x] >= t[MINE][x] && b[MINE][x + 1] < t[MINE][x + 1]) {
+            t[MINE][x + 1] = t[MINE][x];
+            b[MINE][x + 1] = b[MINE][x];
+        }
     for (k = 0; k < 5; k++)
         gfx_vspans(rp, 0, SCREEN_W, t[k], b[k], col[k]);
 }
@@ -427,11 +441,11 @@ static void draw_terrain(struct RastPort *rp, GameState *gs)
                 RectFill(rp, x, th, x, th + 2);
                 SetAPen(rp, COL_DKBROWN);
                 RectFill(rp, x, th + 3, x, SCREEN_H - 25);
-                /* Mine dot */
-                if ((x & 3) < 2) {
-                    SetAPen(rp, COL_RED);
-                    RectFill(rp, x, th - 4, x, th - 1);
-                }
+                /* Mine dot. fix: drawn 1 px wide and only when
+                   (x & 3) < 2, so a 1-px mine on the other screen columns
+                   was invisible; now 2 px wide on every column */
+                SetAPen(rp, COL_RED);
+                RectFill(rp, x, th - 4, x < SCREEN_W - 1 ? x + 1 : x, th - 1);
                 break;
         }
     }
@@ -680,8 +694,8 @@ void draw_hud(struct RastPort *rp, GameState *gs)
     /* High score area */
     SetAPen(rp, COL_WHITE);
     draw_string_at(rp, SCREEN_W - 72, 2, "HI", 1);
-    /* Just show current score as high score placeholder */
-    long_to_str(buf, (long)gs->score);
+    /* fix: was the current score, as a placeholder */
+    long_to_str(buf, (long)gs->hiscore);
     draw_string_at(rp, SCREEN_W - 56, 2, buf, 1);
 }
 
@@ -700,7 +714,7 @@ static WORD mtn_far_top[SCREEN_W], mtn_near_top[SCREEN_W];
 static void draw_mountains(struct RastPort *rp, LONG scroll_x)
 {
     WORD x, bot[SCREEN_W];
-    WORD foff = (WORD)((scroll_x / 400) % 640), noff = (WORD)((scroll_x / 200) % 640);
+    WORD foff = (WORD)((scroll_x / 400) % 512), noff = (WORD)((scroll_x / 200) % 512);  /* fix: 512 */
     for (x = 0; x < SCREEN_W; x += 2) {
         WORD peak = approx_sin((WORD)((x + foff) * 3 / 2));
         WORD h = 120 + 20 - (peak * 40 / 255);
@@ -851,11 +865,13 @@ static void draw_terrain_blit(struct RastPort *rp, GameState *gs)
     }
     blit_area(tstrip, TSTRIP_BPR, (int)raw, 0, rp->base, 160, 0, tband_y0,
               SCREEN_W, tband_rows, BLIT_COPY);
-    /* mine dots, as in the original (they follow the screen x) */
+    /* mine dots, as in the original. fix (as in the original): 2 px wide
+       on every column (they were 1 px, and only where (x & 3) < 2) */
     SetAPen(rp, COL_RED);
     for (x = 0, u = (int)raw; x < SCREEN_W; x++) {
-        if (gs->terrain[u] == TERRAIN_MINE && (x & 3) < 2)
-            RectFill(rp, x, gs->terrain_h[u] - 4, x, gs->terrain_h[u] - 1);
+        if (gs->terrain[u] == TERRAIN_MINE)
+            RectFill(rp, x, gs->terrain_h[u] - 4, x < SCREEN_W - 1 ? x + 1 : x,
+                     gs->terrain_h[u] - 1);
         if (++u >= TERRAIN_LEN) u = 0;
     }
 }
@@ -879,8 +895,8 @@ void draw_game(struct RastPort *rp, GameState *gs)
         }
     }
     if (strip[1][1]) {
-        WORD foff = (WORD)((gs->scroll_x / 400) % 640);
-        WORD noff = (WORD)((gs->scroll_x / 200) % 640);
+        WORD foff = (WORD)((gs->scroll_x / 400) % 512);   /* fix: 512 */
+        WORD noff = (WORD)((gs->scroll_x / 200) % 512);
         /* rows outside the mountain band: cleared; the band is copied */
         gfx_fill_band(HUD_ROWS, 79, COL_BLACK);
         gfx_fill_band(171, tstrip ? TBAND_Y0 - 1 : SCREEN_H - 1, COL_BLACK);

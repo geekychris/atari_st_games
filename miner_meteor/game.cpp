@@ -206,7 +206,9 @@ void MinerGame::update_player(UBYTE input)
     p.y = new_y;
 
     /* Animation frame — every 6 ticks, when actually moving. */
-    if (p.vx != 0 && (gs->tick % 6) == 0) p.frame = (p.frame + 1) & 3;
+    /* fix: wrapped & 3, but the sheet has 8 walk frames (render.cpp
+       draws frame & 7), so frames 4-7 were never shown */
+    if (p.vx != 0 && (gs->tick % 6) == 0) p.frame = (p.frame + 1) & 7;
 
     /* Collectibles + hazard tiles at the player's centre. */
     LONG cx = p.x + 8, cy = p.y + 8;

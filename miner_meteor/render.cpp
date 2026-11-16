@@ -458,7 +458,7 @@ static void draw_player(const Player &p)
 {
     /* Pick the appropriate sheet frame:
      *   - airborne: jump if rising, fall if descending
-     *   - grounded: walk cycle by direction, indexed by frame&3
+     *   - grounded: walk cycle by direction, indexed by frame&7
      */
     LONG row, col;
     if (!p.on_ground) {

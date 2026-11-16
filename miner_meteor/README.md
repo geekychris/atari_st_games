@@ -42,7 +42,7 @@ The Amiga version is silent (its sound functions are stubs that log
 
 | | |
 |---|---|
-| `game.cpp`, `levels.*`, `audio.*`, `tilesheet_data.*`, `render.h` | **Unmodified.** |
+| `game.cpp`, `levels.*`, `audio.*`, `tilesheet_data.*`, `render.h` | **Unmodified**, with the original's later fixes (below). |
 | `game.h` | One fix, see below. |
 | `render.cpp` | `__MINT__` branches: the screen is fgfx's (320x240, triple buffered) instead of an AGA screen with two `ScreenBuffer`s, tiles are written straight into it as RGB565 words instead of one `RectFill` per run of same-coloured pixels, and only grid cells that changed (a key taken, the exit blinking, a floor collapsing) or that a sprite covered are redrawn, per screen buffer. The game keeps its 320x256 coordinates; Y is mapped to 240 lines (each 16-pixel tile loses one row). |
 | `main_falcon.cpp` | Replaces `main.cpp` (kept as `main.cpp.amiga`): IKBD keys and joystick instead of IDCMP raw keys and the CIA fire button, the VBL counter instead of `WaitTOF`, NatFeats logging. |
@@ -72,6 +72,10 @@ Key presses shorter than a drawn frame are not lost (`ikbd_key_hit`).
   collapsing floors, air, the collision snaps) finds a run through every
   one of the six caverns, checked by replaying it with the game code.
   Set `JUMP_IMPULSE` to (-8) for the original jump.
+- From the original's later fixes ([amiga_games#53](https://github.com/geekychris/amiga_games/pull/53)):
+  - **Hazard Bay:** row 5 ended in `.`, a hole in the right wall; now `#`.
+  - **Guardian Alley:** the first guardian (the one on the top ledge) was at y 48, inside the row-3 ledge; now y 32, on it.
+  - **Walk cycle:** the walk frame wrapped at 4, but the sheet has 8 walk frames (`render.cpp` draws `frame & 7`), so frames 4–7 were never shown.
 - The title and end-screen captions are drawn in pen 0 over a coloured bar.
   With the Amiga's default JAM2 draw mode (background pen 0) they come out as
   black boxes; the port draws text in JAM1.
@@ -89,3 +93,9 @@ cavern 2 starts, plays a little, checks the PERF lines and quits with Esc; the
 screenshots above come from it. The game logs `MINER SYMBOL state 0x...`
 (the `GameState`), a `state=...` line on every change of mode, level, lives
 or keys, `demo: start` / `demo: done`, and a PERF line every 100 frames.
+
+`tools/route_check.sh` builds `game.cpp` and `levels.cpp` for the host and
+plays a route through each of the six caverns (`tools/routes.json`: the Lynx
+port's routes, with cavern 4's found again by `tools/route_search.cpp` for the
+moved guardian); it clears all six. `tools/route_check.sh search N` searches
+a new route through cavern N.

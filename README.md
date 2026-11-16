@@ -165,6 +165,16 @@ HATARI_DIR=~/src/hatari_augmented make -C canyon_rescue run
 python3 ../hatari_augmented/tools/games/launcher.py --ini games.ini   # host-side launcher
 ```
 
+Or play and debug them all from the browser with the ST DevBench in
+hatari_augmented: an arcade page with every game's picture, description,
+controls, Build and Play, and a dev page with the live screen, keyboard and
+joystick, console, registers, breakpoints, memory and snapshots
+([tools/devbench](https://github.com/geekychris/hatari_augmented/tree/main/tools/devbench)):
+
+```sh
+../hatari_augmented/tools/devbench/run.sh --open    # http://127.0.0.1:3520/arcade
+```
+
 ## History
 
 These ports were developed in `hatari_augmented/examples/` and moved here with

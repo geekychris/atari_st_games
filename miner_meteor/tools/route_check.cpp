@@ -7,11 +7,12 @@
  * (all the keys, then the exit) without losing a life.
  *
  * The routes (tools/routes.json, one list of [input flags, ticks] runs per
- * cavern; 1 left, 2 right, 4 jump) are the Lynx port's
- * (geekychris/lynxdev games/miner_meteor/tools/routes.json), found by a
- * search over the same game logic; the first is demo.h's. Cavern 4's is
- * from tools/route_search.cpp, since its first guardian moved onto the
- * ledge (y 32, was 48 inside it).
+ * cavern; 1 left, 2 right, 4 jump; the first is demo.h's) were found by a
+ * search over this game logic after the landing fix (the player lands on
+ * the floor instead of 16 px above it): an exhaustive breadth-first search
+ * for caverns 1-4 (the shortest runs) and tools/route_search.cpp for 5 and
+ * 6. It also fails a route if the player is ever on the ground with no
+ * floor under their feet (the old landing bob).
  *
  *   tools/route_check.sh
  */
@@ -43,6 +44,18 @@ static std::vector<std::vector<std::pair<int, int> > > load(const char *path)
     return routes;
 }
 
+/* Is there floor right under the player's feet? (off the grid counts) */
+static int floor_under(const GameState &gs)
+{
+    LONG fy = gs.player.y + 16, xs[2] = { gs.player.x + 1, gs.player.x + 14 };
+    for (int i = 0; i < 2; i++) {
+        if (xs[i] < 0 || fy < 0 || xs[i] >= PLAY_W || fy >= PLAY_H) return 1;
+        UBYTE k = gs.grid[fy / TILE_H][xs[i] / TILE_W].kind;
+        if (k == T_SOLID || k == T_COLLAPSE || k == T_CONV_L || k == T_CONV_R) return 1;
+    }
+    return 0;
+}
+
 int main(int argc, char **argv)
 {
     std::vector<std::vector<std::pair<int, int> > > routes = load(argc > 1 ? argv[1] : "tools/routes.json");
@@ -61,6 +74,9 @@ int main(int argc, char **argv)
                 for (int n = 0; n < routes[lv][r].second && !done; n++) {
                     g.tick((UBYTE)routes[lv][r].first);
                     ticks++;
+                    if (gs.mode == GM_PLAYING && gs.player.on_ground && !floor_under(gs)) {
+                        why = "stood in mid-air (landing bob)"; done = -1; continue;
+                    }
                     if (gs.mode == GM_LEVELWIN || gs.mode == GM_WIN) done = 1;
                     else if (gs.lives < lives || gs.mode == GM_LOSE) { why = "lost a life"; done = -1; }
                 }

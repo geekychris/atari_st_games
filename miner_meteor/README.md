@@ -69,9 +69,23 @@ Key presses shorter than a drawn frame are not lost (`ikbd_key_hit`).
   second row-10 gap (column 14) drops you past the spikes to the exit.
   Guardians, spikes, conveyors, collapsing floors and keys are otherwise
   unchanged. A search over the real game state (moving guardians,
-  collapsing floors, air, the collision snaps) finds a run through every
-  one of the six caverns, checked by replaying it with the game code.
+  collapsing floors, air) finds a run through every one of the six
+  caverns, checked by replaying it with the game code.
   Set `JUMP_IMPULSE` to (-8) for the original jump.
+- **The landing bob** (also fixed in the original, amiga_games): a landing
+  at a y that wasn't a multiple of 16 put the player 16 pixels above the
+  floor, from where they dropped and snapped back every few frames, bobbing
+  until they moved on. `game.cpp` now lands them on the floor. Every earlier
+  route jumped from the top of the bob, 16 pixels higher than a real
+  jump, and without it two caverns could not be finished, so their levels
+  changed again (rows marked "bug in the original: unwinnable", as above):
+  - **Hazard Bay:** the left ledge in row 10 (`#....##............#`) is
+    one row higher, in row 9 (`#....##........##..#`). From row 10 the jump
+    fell 14 pixels short of the row-5 ledge under the top-left key.
+  - **Collapsing Attic:** the row-8 collapsing ledge and its key moved six
+    columns left (`#.......cccc.......#`, key `#........K.........#`) and
+    the top ledge in row 3 two columns left (`#......cccc........#`);
+    neither could be reached from the ledge below.
 - From the original's later fixes ([amiga_games#53](https://github.com/geekychris/amiga_games/pull/53)):
   - **Hazard Bay:** row 5 ended in `.`, a hole in the right wall; now `#`.
   - **Guardian Alley:** the first guardian (the one on the top ledge) was at y 48, inside the row-3 ledge; now y 32, on it.
@@ -95,7 +109,8 @@ screenshots above come from it. The game logs `MINER SYMBOL state 0x...`
 or keys, `demo: start` / `demo: done`, and a PERF line every 100 frames.
 
 `tools/route_check.sh` builds `game.cpp` and `levels.cpp` for the host and
-plays a route through each of the six caverns (`tools/routes.json`: the Lynx
-port's routes, with cavern 4's found again by `tools/route_search.cpp` for the
-moved guardian); it clears all six. `tools/route_check.sh search N` searches
-a new route through cavern N.
+plays a route through each of the six caverns (`tools/routes.json`, found
+over this game logic after the landing fix: 271, 252, 842, 256, 209 and 305
+ticks); it clears all six, and fails a route if the player ever stands with
+no floor under them (the old bob). `tools/route_check.sh search N` searches a
+new route through cavern N.

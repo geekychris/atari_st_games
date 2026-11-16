@@ -193,7 +193,10 @@ void MinerGame::update_player(UBYTE input)
     if (p.vy > 0) {
         /* Falling — check floor at both feet corners. */
         if (solid_at(p.x + 1, new_y + 15) || solid_at(p.x + 14, new_y + 15)) {
-            new_y = ((p.y / TILE_H) + 1) * TILE_H - 16;
+            /* fix: snapped to ((p.y / TILE_H) + 1) * TILE_H - 16, 16 px above the
+               floor after a landing at an unaligned y, so the player dropped
+               and snapped back every few frames (a bob) */
+            new_y = ((new_y + 15) / TILE_H) * TILE_H - 16;
             p.vy = 0;
             p.on_ground = 1;
         }
